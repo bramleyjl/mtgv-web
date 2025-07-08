@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     // Build the URL for the MTGV API
     const mtgvApiUrl = new URL('/cards', MTGV_API_BASE_URL);
     mtgvApiUrl.searchParams.set('query', query);
-    mtgvApiUrl.searchParams.set('unique', 'true'); // Default to unique names only for autocomplete
+    mtgvApiUrl.searchParams.set('unique_names_only', 'true'); // Default to unique names only for autocomplete
 
     const response = await fetch(mtgvApiUrl.toString(), {
       method: 'GET',

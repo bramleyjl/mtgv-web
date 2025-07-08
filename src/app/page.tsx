@@ -38,10 +38,6 @@ export default function Home() {
     setValidationError(null); // Clear error when removing cards
   };
 
-  // Calculate current total for display
-  const currentTotal = cards.reduce((sum, card) => sum + (card.quantity || 1), 0);
-  const validation = validateCardList(cards);
-
   return (
     <div className="min-h-screen p-8 bg-gray-900">
       <div className="max-w-4xl mx-auto">
@@ -54,21 +50,6 @@ export default function Home() {
           {/* Card Input Section */}
           <section className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
             <h2 className="text-xl font-semibold text-white mb-4">Add Cards</h2>
-            
-            {/* Card Limit Display */}
-            <div className="mb-4 p-3 bg-gray-700 rounded-md border border-gray-600">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-300">Card Limit:</span>
-                <span className={`font-medium ${validation.isValid ? 'text-green-400' : 'text-red-400'}`}>
-                  {currentTotal} / 100 cards
-                </span>
-              </div>
-              {validationError && (
-                <div className="mt-2 text-sm text-red-400">
-                  {validationError}
-                </div>
-              )}
-            </div>
             
             <CardInput 
               onAddCard={handleAddCard} 

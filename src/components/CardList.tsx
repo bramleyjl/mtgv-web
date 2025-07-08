@@ -77,9 +77,14 @@ export default function CardList({ cards, onUpdateCard, onRemoveCard, validateCa
 
   return (
     <section className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
-      <h2 className="text-xl font-semibold text-white mb-4">
-        Card List ({cards.length} cards)
-      </h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold text-white">
+          Card List
+        </h2>
+        <span className="text-sm font-medium text-green-400">
+          {cards.length}/100 cards
+        </span>
+      </div>
       <div className="space-y-2">
         {cards.map((card, index) => (
           <div
