@@ -93,6 +93,6 @@ export interface UseCardPackageReturn {
   cardPackage: CardPackage | null;
   loading: boolean;
   error: string | null;
-  createCardPackage: (cards: Card[], games?: GameType[], defaultSelection?: DefaultSelection) => Promise<void>;
-  createRandomPackage: (count: number, games?: GameType[], defaultSelection?: DefaultSelection) => Promise<void>;
+  createCardPackage: (cards: Card[], game?: GameType, defaultSelection?: DefaultSelection) => Promise<void>;
+  createRandomPackage: (count: number, game?: GameType, defaultSelection?: DefaultSelection) => Promise<void>;
 } 

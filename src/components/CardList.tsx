@@ -2,6 +2,8 @@
 
 import React from 'react';
 import EditableCardName from './EditableCardName';
+import GameSelector from './GameSelector';
+import { GameType } from '@/types';
 
 interface Card {
   name: string;
@@ -13,9 +15,18 @@ interface CardListProps {
   onUpdateCard: (index: number, card: Card) => void;
   onRemoveCard: (index: number) => void;
   validateCardList?: (cards: Array<{ name: string; quantity: number }>) => { isValid: boolean; error?: string; totalCards?: number };
+  selectedGame: GameType;
+  onGameChange: (game: GameType) => void;
 }
 
-export default function CardList({ cards, onUpdateCard, onRemoveCard, validateCardList }: CardListProps) {
+export default function CardList({ 
+  cards, 
+  onUpdateCard, 
+  onRemoveCard, 
+  validateCardList,
+  selectedGame,
+  onGameChange
+}: CardListProps) {
   // Get the maximum quantity that can be set for a specific card without exceeding the limit
   const getMaxQuantityForCard = (index: number, cardName: string): number => {
     if (!validateCardList) return 100;
@@ -81,6 +92,41 @@ export default function CardList({ cards, onUpdateCard, onRemoveCard, validateCa
         <h2 className="text-xl font-semibold text-white">
           Card List
         </h2>
+        
+        {/* Game Type Selection in the middle */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onGameChange('paper')}
+            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              selectedGame === 'paper'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+            }`}
+          >
+            Paper
+          </button>
+          <button
+            onClick={() => onGameChange('mtgo')}
+            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              selectedGame === 'mtgo'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+            }`}
+          >
+            MTGO
+          </button>
+          <button
+            onClick={() => onGameChange('arena')}
+            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              selectedGame === 'arena'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+            }`}
+          >
+            Arena
+          </button>
+        </div>
+        
         <span className="text-sm font-medium text-green-400">
           {cards.length}/100 cards
         </span>

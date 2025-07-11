@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import EditableCardName from './EditableCardName';
 
@@ -18,6 +18,9 @@ describe('EditableCardName', () => {
     mockOnUpdate.mockClear();
     mockOnCancel.mockClear();
     mockFetch.mockClear();
+    // Clear cache to ensure fresh state for each test
+    const { clearAllCaches } = require('@/lib/cache');
+    clearAllCaches();
   });
 
   it('renders card name as button when not editing', () => {
@@ -257,6 +260,7 @@ describe('EditableCardName', () => {
   });
 
   it('shows loading state during autocomplete', async () => {
+    jest.useFakeTimers();
     mockFetch.mockImplementation(() => 
       new Promise(resolve => 
         setTimeout(() => resolve({
@@ -273,20 +277,24 @@ describe('EditableCardName', () => {
         onCancel={mockOnCancel} 
       />
     );
-    
     // Enter edit mode
     fireEvent.click(screen.getByRole('button', { name: 'Lightning Bolt' }));
-    
     const input = screen.getByDisplayValue('Lightning Bolt');
-    fireEvent.change(input, { target: { value: 'Lightning' } });
+    fireEvent.change(input, { target: { value: 'UniqueQuery123' } });
     fireEvent.focus(input);
-    
+    // Advance timers to trigger debounced search
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+    // Wait for loading state to appear
     await waitFor(() => {
       expect(screen.getByText('Searching...')).toBeInTheDocument();
     });
+    jest.useRealTimers();
   });
 
   it('shows error state when autocomplete fails', async () => {
+    jest.useFakeTimers();
     mockFetch.mockResolvedValueOnce({
       ok: false,
       statusText: 'Network Error'
@@ -299,17 +307,20 @@ describe('EditableCardName', () => {
         onCancel={mockOnCancel} 
       />
     );
-    
     // Enter edit mode
     fireEvent.click(screen.getByRole('button', { name: 'Lightning Bolt' }));
-    
     const input = screen.getByDisplayValue('Lightning Bolt');
-    fireEvent.change(input, { target: { value: 'Lightning' } });
+    fireEvent.change(input, { target: { value: 'UniqueQuery456' } });
     fireEvent.focus(input);
-    
-    await waitFor(() => {
-      expect(screen.getByText(/search failed/i)).toBeInTheDocument();
+    // Advance timers to trigger debounced search
+    act(() => {
+      jest.advanceTimersByTime(300);
     });
+    // Wait for error state to appear
+    await waitFor(() => {
+      expect(screen.getByText('Search failed: Network Error')).toBeInTheDocument();
+    });
+    jest.useRealTimers();
   });
 
   it('trims whitespace from card name on update', async () => {

@@ -202,13 +202,13 @@ export default function EditableCardName({
             ref={suggestionsRef}
             className="absolute z-20 w-full mt-1 bg-gray-700 border border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto"
           >
-            {isLoading && (
+            {isLoading && suggestions.length === 0 && (
               <div className="px-3 py-2 text-sm text-gray-400">
                 Searching...
               </div>
             )}
             
-            {error && (
+            {error && suggestions.length === 0 && (
               <div className="px-3 py-2 text-sm text-red-400">
                 {error}
               </div>

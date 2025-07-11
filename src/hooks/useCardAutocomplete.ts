@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { cardSearchCache, generateSearchCacheKey } from '@/lib/cache';
 
 interface CardSuggestion {
   name: string;
@@ -60,8 +61,20 @@ export function useCardAutocomplete({
         abortControllerRef.current = new AbortController();
 
         try {
-          // TODO: Replace with actual API endpoint when available
-          // For now, we'll use a mock implementation
+          // Check cache first
+          const cacheKey = generateSearchCacheKey(query, true);
+          const cachedResult = cardSearchCache.get<{ cards: CardSuggestion[] }>(cacheKey);
+          
+          if (cachedResult) {
+            console.debug(`Cache hit for search: ${query}`);
+            setSuggestions(cachedResult.cards.slice(0, maxResults));
+            setIsLoading(false);
+            return;
+          }
+
+          console.debug(`Cache miss for search: ${query}`);
+          
+          // Make API request
           const response = await fetch(`/api/cards/search?query=${encodeURIComponent(query)}`, {
             signal: abortControllerRef.current.signal,
           });
@@ -78,6 +91,9 @@ export function useCardAutocomplete({
             id: card.id || card.name, // Use name as fallback ID
           })) || [];
 
+          // Cache the result
+          cardSearchCache.set(cacheKey, { cards: transformedSuggestions });
+          
           setSuggestions(transformedSuggestions.slice(0, maxResults));
         } catch (err) {
           if (err instanceof Error && err.name === 'AbortError') {

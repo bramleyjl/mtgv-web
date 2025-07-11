@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import CardInput from './CardInput';
 import { validateCardList } from '../lib/validation';
@@ -222,6 +222,7 @@ describe('CardInput', () => {
   });
 
   it('shows loading state when searching for cards', async () => {
+    jest.useFakeTimers();
     render(<CardInput onAddCard={mockOnAddCard} />);
     
     const cardNameInput = screen.getByLabelText(/card name/i);
@@ -253,13 +254,21 @@ describe('CardInput', () => {
     fireEvent.change(cardNameInput, { target: { value: 'Lightning' } });
     fireEvent.focus(cardNameInput);
     
+    // Advance timers to trigger debounced search
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+    
     // Should show loading state
     await waitFor(() => {
-      expect(screen.getByText(/searching/i)).toBeInTheDocument();
+      expect(screen.getByText('Searching...')).toBeInTheDocument();
     });
+    
+    jest.useRealTimers();
   });
 
   it('shows error state when search fails', async () => {
+    jest.useFakeTimers();
     render(<CardInput onAddCard={mockOnAddCard} />);
     
     const cardNameInput = screen.getByLabelText(/card name/i);
@@ -289,13 +298,21 @@ describe('CardInput', () => {
     fireEvent.change(cardNameInput, { target: { value: 'Lightning' } });
     fireEvent.focus(cardNameInput);
     
+    // Advance timers to trigger debounced search
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+    
     // Should show error state
     await waitFor(() => {
-      expect(screen.getByText(/search failed/i)).toBeInTheDocument();
+      expect(screen.getByText('Search failed: Network Error')).toBeInTheDocument();
     });
+    
+    jest.useRealTimers();
   });
 
   it('shows suggestions when search succeeds', async () => {
+    jest.useFakeTimers();
     render(<CardInput onAddCard={mockOnAddCard} />);
     
     const cardNameInput = screen.getByLabelText(/card name/i);
@@ -330,14 +347,22 @@ describe('CardInput', () => {
     fireEvent.change(cardNameInput, { target: { value: 'Lightning' } });
     fireEvent.focus(cardNameInput);
     
+    // Advance timers to trigger debounced search
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+    
     // Should show suggestions
     await waitFor(() => {
       expect(screen.getByText('Lightning Bolt')).toBeInTheDocument();
       expect(screen.getByText('Lightning Strike')).toBeInTheDocument();
     });
+    
+    jest.useRealTimers();
   });
 
   it('clears suggestions when input is cleared', async () => {
+    jest.useFakeTimers();
     render(<CardInput onAddCard={mockOnAddCard} />);
     
     const cardNameInput = screen.getByLabelText(/card name/i);
@@ -369,6 +394,11 @@ describe('CardInput', () => {
     fireEvent.change(cardNameInput, { target: { value: 'Lightning' } });
     fireEvent.focus(cardNameInput);
     
+    // Advance timers to trigger debounced search
+    act(() => {
+      jest.advanceTimersByTime(300);
+    });
+    
     // Wait for suggestions to appear
     await waitFor(() => {
       expect(screen.getByText('Lightning Bolt')).toBeInTheDocument();
@@ -381,5 +411,7 @@ describe('CardInput', () => {
     await waitFor(() => {
       expect(screen.queryByText('Lightning Bolt')).not.toBeInTheDocument();
     });
+    
+    jest.useRealTimers();
   });
 }); 
