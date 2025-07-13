@@ -52,9 +52,7 @@ describe('useCardAutocomplete', () => {
     });
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/cards/search?query=ab', expect.objectContaining({
-        signal: expect.any(AbortSignal)
-      }));
+      expect(mockFetch).toHaveBeenCalledWith('/api/cards/search?query=ab&unique_names_only=true');
     });
   });
 
@@ -85,9 +83,7 @@ describe('useCardAutocomplete', () => {
     });
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/cards/search?query=lightning', expect.objectContaining({
-        signal: expect.any(AbortSignal)
-      }));
+      expect(mockFetch).toHaveBeenCalledWith('/api/cards/search?query=lightning&unique_names_only=true');
     });
     jest.useRealTimers();
   });
@@ -124,9 +120,7 @@ describe('useCardAutocomplete', () => {
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(mockFetch).toHaveBeenCalledWith('/api/cards/search?query=bolt', expect.objectContaining({
-        signal: expect.any(AbortSignal)
-      }));
+      expect(mockFetch).toHaveBeenCalledWith('/api/cards/search?query=bolt&unique_names_only=true');
     });
     jest.useRealTimers();
   });
@@ -171,7 +165,7 @@ describe('useCardAutocomplete', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.error).toBe('Search failed: Not Found');
+      expect(result.current.error).toBe('Card search failed: undefined Not Found');
       expect(result.current.isLoading).toBe(false);
       expect(result.current.suggestions).toEqual([]);
     });

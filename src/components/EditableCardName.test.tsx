@@ -294,10 +294,11 @@ describe('EditableCardName', () => {
   });
 
   it('shows error state when autocomplete fails', async () => {
-    jest.useFakeTimers();
-    mockFetch.mockResolvedValueOnce({
+    // Mock fetch to return an error
+    (fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
-      statusText: 'Network Error'
+      status: 500,
+      statusText: 'Network Error',
     });
 
     render(
@@ -307,20 +308,17 @@ describe('EditableCardName', () => {
         onCancel={mockOnCancel} 
       />
     );
+    
     // Enter edit mode
     fireEvent.click(screen.getByRole('button', { name: 'Lightning Bolt' }));
+    
     const input = screen.getByDisplayValue('Lightning Bolt');
     fireEvent.change(input, { target: { value: 'UniqueQuery456' } });
-    fireEvent.focus(input);
-    // Advance timers to trigger debounced search
-    act(() => {
-      jest.advanceTimersByTime(300);
-    });
+    
     // Wait for error state to appear
     await waitFor(() => {
-      expect(screen.getByText('Search failed: Network Error')).toBeInTheDocument();
+      expect(screen.getByText('Request failed with status 500: Network Error')).toBeInTheDocument();
     });
-    jest.useRealTimers();
   });
 
   it('trims whitespace from card name on update', async () => {

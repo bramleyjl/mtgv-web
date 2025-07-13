@@ -2,8 +2,9 @@
 
 import React from 'react';
 import EditableCardName from './EditableCardName';
-import GameSelector from './GameSelector';
-import { GameType } from '@/types';
+import ErrorDisplay from './ErrorDisplay';
+import { useCardPackage } from '@/hooks/useCardPackage';
+import { GameType, Card as CardType, DefaultSelection } from '@/types';
 
 interface Card {
   name: string;
@@ -17,6 +18,8 @@ interface CardListProps {
   validateCardList?: (cards: Array<{ name: string; quantity: number }>) => { isValid: boolean; error?: string; totalCards?: number };
   selectedGame: GameType;
   onGameChange: (game: GameType) => void;
+  selectedDefaultSelection: DefaultSelection;
+  onDefaultSelectionChange: (selection: DefaultSelection) => void;
 }
 
 export default function CardList({ 
@@ -25,8 +28,30 @@ export default function CardList({
   onRemoveCard, 
   validateCardList,
   selectedGame,
-  onGameChange
+  onGameChange,
+  selectedDefaultSelection,
+  onDefaultSelectionChange
 }: CardListProps) {
+  const { 
+    cardPackage, 
+    loading, 
+    error, 
+    createCardPackage, 
+    clearError, 
+    clearCardPackage,
+    updateCardList,
+    updateVersionSelection,
+    isConnected
+  } = useCardPackage();
+
+  // Convert local card format to API format for WebSocket updates
+  const convertToAPICards = (localCards: Array<{ name: string; quantity: number }>): CardType[] => {
+    return localCards.map(card => ({
+      name: card.name,
+      count: card.quantity
+    }));
+  };
+
   // Get the maximum quantity that can be set for a specific card without exceeding the limit
   const getMaxQuantityForCard = (index: number, cardName: string): number => {
     if (!validateCardList) return 100;
@@ -41,27 +66,51 @@ export default function CardList({
     const card = cards[index];
     const maxQuantity = getMaxQuantityForCard(index, card.name);
     if (card.quantity < maxQuantity) {
-      onUpdateCard(index, { ...card, quantity: card.quantity + 1 });
+      const updatedCard = { ...card, quantity: card.quantity + 1 };
+      onUpdateCard(index, updatedCard);
+      
+      // Send real-time update via WebSocket if package exists
+      if (cardPackage?.id) {
+        const newCards = cards.map((c, i) => i === index ? updatedCard : c);
+        updateCardList(convertToAPICards(newCards));
+      }
     }
   };
 
   const handleDecreaseQuantity = (index: number) => {
     const card = cards[index];
     if (card.quantity > 1) {
-      onUpdateCard(index, { ...card, quantity: card.quantity - 1 });
+      const updatedCard = { ...card, quantity: card.quantity - 1 };
+      onUpdateCard(index, updatedCard);
+      
+      // Send real-time update via WebSocket if package exists
+      if (cardPackage?.id) {
+        const newCards = cards.map((c, i) => i === index ? updatedCard : c);
+        updateCardList(convertToAPICards(newCards));
+      }
     }
   };
 
   const handleQuantityChange = (index: number, value: string) => {
     const card = cards[index];
+    let updatedCard: Card;
+    
     // Allow empty string for clearing
     if (value === '') {
-      onUpdateCard(index, { ...card, quantity: 0 });
+      updatedCard = { ...card, quantity: 0 };
     } else {
       const newQuantity = parseInt(value) || 1;
       const maxQuantity = getMaxQuantityForCard(index, card.name);
       const clampedQuantity = Math.max(1, Math.min(maxQuantity, newQuantity));
-      onUpdateCard(index, { ...card, quantity: clampedQuantity });
+      updatedCard = { ...card, quantity: clampedQuantity };
+    }
+    
+    onUpdateCard(index, updatedCard);
+    
+    // Send real-time update via WebSocket if package exists
+    if (cardPackage?.id) {
+      const newCards = cards.map((c, i) => i === index ? updatedCard : c);
+      updateCardList(convertToAPICards(newCards));
     }
   };
 
@@ -69,17 +118,54 @@ export default function CardList({
     const card = cards[index];
     // If empty or invalid, default to 1
     if (value === '' || isNaN(parseInt(value))) {
-      onUpdateCard(index, { ...card, quantity: 1 });
+      const updatedCard = { ...card, quantity: 1 };
+      onUpdateCard(index, updatedCard);
+      
+      // Send real-time update via WebSocket if package exists
+      if (cardPackage?.id) {
+        const newCards = cards.map((c, i) => i === index ? updatedCard : c);
+        updateCardList(convertToAPICards(newCards));
+      }
     }
   };
 
   const handleCardNameUpdate = (index: number, newName: string) => {
     const card = cards[index];
-    onUpdateCard(index, { ...card, name: newName });
+    const updatedCard = { ...card, name: newName };
+    onUpdateCard(index, updatedCard);
+    
+    // Send real-time update via WebSocket if package exists
+    if (cardPackage?.id) {
+      const newCards = cards.map((c, i) => i === index ? updatedCard : c);
+      updateCardList(convertToAPICards(newCards));
+    }
   };
 
   const handleCardNameCancel = () => {
     // No-op for cancel in list context
+  };
+
+  const handleCreatePackage = async () => {
+    if (cards.length === 0) return;
+    
+    // Convert cards to the format expected by the API
+    const cardList: CardType[] = cards.map(card => ({
+      name: card.name,
+      count: card.quantity
+    }));
+    
+    await createCardPackage(cardList, selectedGame, selectedDefaultSelection);
+  };
+
+  const handleClearPackage = () => {
+    clearCardPackage();
+  };
+
+  const handleVersionSelection = (cardName: string, scryfallId: string) => {
+    // Send real-time update via WebSocket if package exists
+    if (cardPackage?.id) {
+      updateVersionSelection(cardName, scryfallId);
+    }
   };
 
   if (cards.length === 0) {
@@ -127,10 +213,93 @@ export default function CardList({
           </button>
         </div>
         
-        <span className="text-sm font-medium text-green-400">
-          {cards.length}/100 cards
-        </span>
+        {/* Default Selection */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400">Default:</span>
+          <button
+            onClick={() => onDefaultSelectionChange('newest')}
+            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+              selectedDefaultSelection === 'newest'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+            }`}
+          >
+            Newest
+          </button>
+          <button
+            onClick={() => onDefaultSelectionChange('oldest')}
+            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+              selectedDefaultSelection === 'oldest'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+            }`}
+          >
+            Oldest
+          </button>
+          <button
+            onClick={() => onDefaultSelectionChange('least_expensive')}
+            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+              selectedDefaultSelection === 'least_expensive'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+            }`}
+          >
+            Least Exp
+          </button>
+          <button
+            onClick={() => onDefaultSelectionChange('most_expensive')}
+            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+              selectedDefaultSelection === 'most_expensive'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+            }`}
+          >
+            Most Exp
+          </button>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-green-400">
+            {cards.length}/100 cards
+          </span>
+          {/* WebSocket Connection Status */}
+          {cardPackage?.id && (
+            <div className="flex items-center gap-1">
+              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <span className="text-xs text-gray-400">
+                {isConnected ? 'Live' : 'Offline'}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Error Display */}
+      <ErrorDisplay 
+        error={error} 
+        onDismiss={clearError}
+        type="error"
+        className="mb-4"
+      />
+
+      {/* Create Package Button */}
+      <div className="mb-4">
+        <button
+          onClick={handleCreatePackage}
+          disabled={loading || cards.length === 0}
+          className="w-full px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+        >
+          {loading ? (
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>Creating Package...</span>
+            </div>
+          ) : (
+            'Create Package'
+          )}
+        </button>
+      </div>
+
       <div className="space-y-2">
         {cards.map((card, index) => (
           <div
@@ -189,6 +358,79 @@ export default function CardList({
           </div>
         ))}
       </div>
+
+      {/* Package Results with Version Selection */}
+      {cardPackage && (
+        <div className="mt-6 p-4 bg-green-900 border border-green-700 rounded-md">
+          <div className="flex justify-between items-start mb-3">
+            <h3 className="text-lg font-semibold text-green-200">Package Created Successfully!</h3>
+            <button
+              onClick={handleClearPackage}
+              className="text-green-400 hover:text-green-300 text-sm"
+            >
+              Clear
+            </button>
+          </div>
+          
+          <div className="space-y-2 text-sm text-green-100">
+            <p><strong>Game Type:</strong> {cardPackage.game}</p>
+            <p><strong>Default Selection:</strong> {cardPackage.default_selection}</p>
+            <p><strong>Cards in Package:</strong></p>
+            {cardPackage.package_entries && cardPackage.package_entries.length > 0 ? (
+              <div className="space-y-3">
+                {cardPackage.package_entries.map((entry, index) => (
+                  <div key={`${entry.oracle_id || entry.name}-${index}`} className="bg-green-800 rounded p-3">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="font-medium text-green-200">
+                        {entry.count}x {entry.name}
+                      </span>
+                      {entry.not_found && (
+                        <span className="text-yellow-300 text-xs">(not found)</span>
+                      )}
+                    </div>
+                    
+                    {/* Version Selection */}
+                    {!entry.not_found && entry.card_prints && entry.card_prints.length > 1 && (
+                      <div className="mt-2">
+                        <p className="text-xs text-green-300 mb-2">Select Version:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {entry.card_prints.map((print, printIndex) => (
+                            <button
+                              key={print.scryfall_id}
+                              onClick={() => handleVersionSelection(entry.name, print.scryfall_id)}
+                              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                                entry.selected_print === print.scryfall_id
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                              }`}
+                            >
+                              {print.set_name || 'Unknown Set'}
+                              {print.price && (
+                                <span className="ml-1 text-xs opacity-75">
+                                  (${print.price.toFixed(2)})
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Show selected version info */}
+                    {!entry.not_found && entry.selected_print && (
+                      <div className="mt-1 text-xs text-green-300">
+                        Selected: {entry.card_prints.find(p => p.scryfall_id === entry.selected_print)?.set_name || 'Unknown Set'}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-yellow-300">No cards found in package</p>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 } 
