@@ -19,9 +19,21 @@ export interface CardPrint {
 
 // Card Package types
 export interface CardPackage {
-  cards: CardPrint[];
-  total_cards: number;
-  total_price?: number;
+  id?: string;
+  card_list: Card[];
+  game: GameType;
+  package_entries: PackageEntry[];
+  default_selection: DefaultSelection;
+}
+
+export interface PackageEntry {
+  count: number;
+  oracle_id: string | null;
+  name: string;
+  card_prints: CardPrint[];
+  selected_print: string | null;
+  user_selected: boolean;
+  not_found?: boolean;
 }
 
 // API Response types
@@ -89,10 +101,32 @@ export interface UseCardAutocompleteReturn {
   searchCards: (query: string) => void;
 }
 
+// WebSocket types
+export interface WebSocketMessage {
+  type: string;
+  data?: any;
+  packageId?: string;
+}
+
+export interface WebSocketPackageUpdate {
+  type: 'card-list-updated' | 'version-selection-updated' | 'joined-package' | 'error';
+  data?: any;
+  packageId?: string;
+  error?: string;
+}
+
+// Hook return types
 export interface UseCardPackageReturn {
   cardPackage: CardPackage | null;
   loading: boolean;
   error: string | null;
+  isConnected: boolean;
   createCardPackage: (cards: Card[], game?: GameType, defaultSelection?: DefaultSelection) => Promise<void>;
   createRandomPackage: (count: number, game?: GameType, defaultSelection?: DefaultSelection) => Promise<void>;
+  updateCardList: (cards: Card[]) => void;
+  updateVersionSelection: (cardName: string, scryfallId: string) => void;
+  joinPackage: (packageId: string) => void;
+  leavePackage: () => void;
+  clearError: () => void;
+  clearCardPackage: () => void;
 } 

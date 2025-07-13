@@ -22,7 +22,7 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
   const { suggestions, isLoading, error, searchCards, clearSuggestions } = useCardAutocomplete({
     minLength: 2,
     debounceMs: 300,
-    maxResults: 10,
+    maxResults: 15,
   });
 
   // Check if adding the current card would exceed the limit

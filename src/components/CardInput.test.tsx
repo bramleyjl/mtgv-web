@@ -268,47 +268,22 @@ describe('CardInput', () => {
   });
 
   it('shows error state when search fails', async () => {
-    jest.useFakeTimers();
+    // Mock fetch to return an error
+    (fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: 'Network Error',
+    });
+
     render(<CardInput onAddCard={mockOnAddCard} />);
     
-    const cardNameInput = screen.getByLabelText(/card name/i);
-    
-    // Mock the fetch to simulate an error
-    const mockFetch = jest.fn(() => 
-      Promise.resolve({
-        ok: false,
-        statusText: 'Network Error',
-        headers: new Headers(),
-        redirected: false,
-        status: 500,
-        type: 'default',
-        url: '',
-        body: null,
-        bodyUsed: false,
-        clone: () => new Response(),
-        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
-        blob: () => Promise.resolve(new Blob()),
-        formData: () => Promise.resolve(new FormData()),
-        text: () => Promise.resolve(''),
-        json: () => Promise.resolve({}),
-      } as Response)
-    );
-    global.fetch = mockFetch;
-    
-    fireEvent.change(cardNameInput, { target: { value: 'Lightning' } });
-    fireEvent.focus(cardNameInput);
-    
-    // Advance timers to trigger debounced search
-    act(() => {
-      jest.advanceTimersByTime(300);
-    });
+    const input = screen.getByLabelText(/card name/i);
+    fireEvent.change(input, { target: { value: 'Lightning' } });
     
     // Should show error state
     await waitFor(() => {
-      expect(screen.getByText('Search failed: Network Error')).toBeInTheDocument();
+      expect(screen.getByText('Request failed with status 500: Network Error')).toBeInTheDocument();
     });
-    
-    jest.useRealTimers();
   });
 
   it('shows suggestions when search succeeds', async () => {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { cardSearchCache, generateSearchCacheKey } from '@/lib/cache';
+import { mtgvAPI } from '@/lib/api';
 
 interface CardSuggestion {
   name: string;
@@ -23,7 +24,7 @@ interface UseCardAutocompleteReturn {
 export function useCardAutocomplete({
   minLength = 2,
   debounceMs = 300,
-  maxResults = 10,
+  maxResults = 15,
 }: UseCardAutocompleteOptions = {}): UseCardAutocompleteReturn {
   const [suggestions, setSuggestions] = useState<CardSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -67,40 +68,35 @@ export function useCardAutocomplete({
           
           if (cachedResult) {
             console.debug(`Cache hit for search: ${query}`);
-            setSuggestions(cachedResult.cards.slice(0, maxResults));
+            // Ensure cached suggestions have unique IDs
+            const cachedSuggestions = cachedResult.cards.map((suggestion, index) => ({
+              ...suggestion,
+              id: `${suggestion.name}-${index}`,
+            }));
+            setSuggestions(cachedSuggestions.slice(0, maxResults));
             setIsLoading(false);
             return;
           }
 
           console.debug(`Cache miss for search: ${query}`);
-          
-          // Make API request
-          const response = await fetch(`/api/cards/search?query=${encodeURIComponent(query)}`, {
-            signal: abortControllerRef.current.signal,
-          });
 
-          if (!response.ok) {
-            throw new Error(`Search failed: ${response.statusText}`);
-          }
-
-          const data = await response.json();
-          
-          // Transform the data to match our interface
-          const transformedSuggestions: CardSuggestion[] = data.cards?.map((card: any) => ({
+          const cardObjects = await mtgvAPI.searchCards(query);
+          const transformedSuggestions: CardSuggestion[] = cardObjects.map((card: any, index: number) => ({
+            id: card.id || `${card.name}-${index}`,
             name: card.name,
-            id: card.id || card.name, // Use name as fallback ID
-          })) || [];
+            set: card.set,
+            set_name: card.set_name,
+            collector_number: card.collector_number,
+          }));
 
-          // Cache the result
           cardSearchCache.set(cacheKey, { cards: transformedSuggestions });
-          
           setSuggestions(transformedSuggestions.slice(0, maxResults));
         } catch (err) {
           if (err instanceof Error && err.name === 'AbortError') {
             // Request was aborted, ignore
             return;
           }
-          
+
           console.error('Card search error:', err);
           setError(err instanceof Error ? err.message : 'Failed to search cards');
         } finally {

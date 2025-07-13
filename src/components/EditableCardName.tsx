@@ -26,7 +26,7 @@ export default function EditableCardName({
   const { suggestions, isLoading, error, searchCards, clearSuggestions } = useCardAutocomplete({
     minLength: 2,
     debounceMs: 300,
-    maxResults: 10,
+    maxResults: 15,
   });
 
   // Handle input changes
