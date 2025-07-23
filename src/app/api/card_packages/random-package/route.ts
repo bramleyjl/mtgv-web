@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build backend API URL
-    const backendUrl = process.env.MTGV_API_URL || 'http://localhost:3001';
+    const backendUrl = process.env.MTGV_API_URL || 'http://localhost:4000';
     const apiUrl = `${backendUrl}/card_package/random?count=${countNum}&game=${game}&default_selection=${defaultSelection}`;
 
     // Forward request to backend

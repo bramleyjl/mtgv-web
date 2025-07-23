@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import CardInput from "@/components/CardInput";
 import CardList from "@/components/CardList";
-import CacheMonitor from "@/components/CacheMonitor";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import { validateCardList } from "@/lib/validation";
 import { GameType, DefaultSelection, Card } from "@/types";
@@ -12,7 +11,6 @@ import { useCardPackage } from "@/hooks/useCardPackage";
 export default function Home() {
   const [cards, setCards] = useState<Array<{ name: string; quantity: number }>>([]);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [showCacheMonitor, setShowCacheMonitor] = useState(false);
   const [selectedGame, setSelectedGame] = useState<GameType>('paper');
   const [selectedDefaultSelection, setSelectedDefaultSelection] = useState<DefaultSelection>('newest');
 
@@ -104,32 +102,9 @@ export default function Home() {
       <div className="max-w-4xl mx-auto">
         <header className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">MTGV Card Package Builder</h1>
-          <p className="text-gray-300">Test the CardInput component</p>
-          <div className="flex justify-center items-center gap-4 mt-4">
-            <button
-              onClick={() => setShowCacheMonitor(!showCacheMonitor)}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-            >
-              {showCacheMonitor ? 'Hide' : 'Show'} Cache Monitor
-            </button>
-            {/* WebSocket Connection Status */}
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <span className="text-sm text-gray-300">
-                {isConnected ? 'Real-time Connected' : 'Real-time Disconnected'}
-              </span>
-            </div>
-          </div>
         </header>
 
         <main className="space-y-8">
-          {/* Cache Monitor Section */}
-          {showCacheMonitor && (
-            <section>
-              <CacheMonitor />
-            </section>
-          )}
-
           {/* Error Display Section */}
           <section className="space-y-4">
             {/* Package API Errors */}
@@ -138,7 +113,6 @@ export default function Home() {
               onDismiss={clearPackageError}
               type="error"
             />
-            
             {/* Validation Errors */}
             <ErrorDisplay 
               error={validationError} 
@@ -150,7 +124,6 @@ export default function Home() {
           {/* Card Input Section */}
           <section className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
             <h2 className="text-xl font-semibold text-white mb-4">Add Cards</h2>
-            
             <CardInput 
               onAddCard={handleAddCard} 
               currentCards={cards}

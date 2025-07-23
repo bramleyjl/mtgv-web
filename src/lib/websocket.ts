@@ -11,8 +11,9 @@ class WebSocketService {
   private onMessageCallback: ((message: WebSocketPackageUpdate) => void) | null = null;
   private onConnectionChangeCallback: ((connected: boolean) => void) | null = null;
 
-  constructor(url: string = 'ws://localhost:3001') {
-    this.url = url;
+  constructor(url?: string) {
+    // Use environment variable or fallback to localhost:4000
+    this.url = url || process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:4000';
   }
 
   connect(): Promise<void> {

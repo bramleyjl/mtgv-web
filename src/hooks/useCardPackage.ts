@@ -107,7 +107,7 @@ export function useCardPackage(): UseCardPackageReturn {
     // Connect to WebSocket
     websocketService.connect().catch(err => {
       console.warn('WebSocket connection failed:', err);
-      setError('Real-time updates unavailable');
+      // Don't set error for users - WebSocket is internal infrastructure
     });
 
     return () => {

@@ -262,15 +262,6 @@ export default function CardList({
           <span className="text-sm font-medium text-green-400">
             {cards.length}/100 cards
           </span>
-          {/* WebSocket Connection Status */}
-          {cardPackage?.id && (
-            <div className="flex items-center gap-1">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <span className="text-xs text-gray-400">
-                {isConnected ? 'Live' : 'Offline'}
-              </span>
-            </div>
-          )}
         </div>
       </div>
 
