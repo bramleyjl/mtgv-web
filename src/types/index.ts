@@ -11,6 +11,11 @@ export interface CardPrint {
   count: number;
   name?: string;
   image_url?: string;
+  image_uris?: Array<{
+    small?: string;
+    normal?: string;
+    large?: string;
+  }>;
   price?: number;
   set_name?: string;
   collector_number?: string;

@@ -3,8 +3,9 @@
 import React from 'react';
 import EditableCardName from './EditableCardName';
 import ErrorDisplay from './ErrorDisplay';
+import CardVersion from './CardVersion';
 import { useCardPackage } from '@/hooks/useCardPackage';
-import { GameType, Card as CardType, DefaultSelection } from '@/types';
+import { GameType, Card as CardType, DefaultSelection, CardPrint } from '@/types';
 
 interface Card {
   name: string;
@@ -384,24 +385,15 @@ export default function CardList({
                     {!entry.not_found && entry.card_prints && entry.card_prints.length > 1 && (
                       <div className="mt-2">
                         <p className="text-xs text-green-300 mb-2">Select Version:</p>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                           {entry.card_prints.map((print, printIndex) => (
-                            <button
+                            <CardVersion
                               key={print.scryfall_id}
-                              onClick={() => handleVersionSelection(entry.name, print.scryfall_id)}
-                              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                                entry.selected_print === print.scryfall_id
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                              }`}
-                            >
-                              {print.set_name || 'Unknown Set'}
-                              {print.price && (
-                                <span className="ml-1 text-xs opacity-75">
-                                  (${print.price.toFixed(2)})
-                                </span>
-                              )}
-                            </button>
+                              print={print}
+                              isSelected={entry.selected_print === print.scryfall_id}
+                              onSelect={(scryfallId) => handleVersionSelection(entry.name, scryfallId)}
+                              cardName={entry.name}
+                            />
                           ))}
                         </div>
                       </div>
