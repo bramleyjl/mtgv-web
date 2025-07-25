@@ -32,7 +32,14 @@ export default function CardVersion({ print, isSelected, onSelect, cardName }: C
     return null;
   };
 
+  // Magic card back image as fallback (local file)
+  const getFallbackImageUrl = () => {
+    return '/magic-card-back.jpg';
+  };
+
   const imageUrl = getImageUrl();
+  const fallbackImageUrl = getFallbackImageUrl();
+
 
   const handleImageLoad = () => {
     setImageLoading(false);
@@ -43,7 +50,16 @@ export default function CardVersion({ print, isSelected, onSelect, cardName }: C
     setImageLoading(false);
   };
 
+
+
+
+
   const handleClick = () => {
+    console.log(`CardVersion clicked for ${cardName}:`, {
+      scryfallId: print.scryfall_id,
+      isSelected,
+      cardName
+    });
     onSelect(print.scryfall_id);
   };
 
@@ -75,12 +91,13 @@ export default function CardVersion({ print, isSelected, onSelect, cardName }: C
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         ) : (
-          <div className="flex h-full items-center justify-center bg-gray-200 dark:bg-gray-700">
-            <div className="text-center text-gray-500 dark:text-gray-400">
-              <div className="text-sm font-medium">{cardName}</div>
-              <div className="text-xs">{print.set_name || 'Unknown Set'}</div>
-            </div>
-          </div>
+          <Image
+            src={fallbackImageUrl}
+            alt="Magic card back"
+            className="w-full h-full object-cover"
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
         )}
       </div>
 

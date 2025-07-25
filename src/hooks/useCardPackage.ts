@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { mtgvAPI } from '@/lib/api';
 import { websocketService, createDebouncedSender } from '@/lib/websocket';
-import { Card, CardPackage, GameType, DefaultSelection, UseCardPackageReturn, WebSocketMessage } from '@/types';
+import { Card, CardPackage, GameType, DefaultSelection, UseCardPackageReturn, WebSocketPackageUpdate } from '@/types';
 
 const PACKAGE_ID_STORAGE_KEY = 'mtgv-current-package-id';
 
@@ -52,6 +52,7 @@ export function useCardPackage(): UseCardPackageReturn {
 
   // WebSocket connection and message handling
   useEffect(() => {
+    console.log('[useCardPackage] useEffect mount: connecting WebSocket');
     const handleConnectionChange = (connected: boolean) => {
       setIsConnected(connected);
       
@@ -64,17 +65,19 @@ export function useCardPackage(): UseCardPackageReturn {
       }
     };
 
-    const handleMessage = (message: any) => {
+    const handleMessage = (message: WebSocketPackageUpdate) => {
       switch (message.type) {
         case 'card-list-updated':
-          setCardPackage(prev => prev ? { ...prev, card_list: message.data } : null);
+          console.log('WebSocket card-list-updated:', message.data);
+          setCardPackage(prev => prev ? { ...prev, card_list: message.data as Card[] } : null);
           break;
         case 'version-selection-updated':
           setCardPackage(prev => {
             if (!prev) return null;
+            const data = message.data as { oracleId: string; scryfallId: string };
             const updatedEntries = prev.package_entries.map(entry => {
-              if (entry.name === message.data.cardName) {
-                return { ...entry, selected_print: message.data.scryfallId };
+              if (entry.oracle_id === data.oracleId) {
+                return { ...entry, selected_print: data.scryfallId };
               }
               return entry;
             });
@@ -82,14 +85,11 @@ export function useCardPackage(): UseCardPackageReturn {
           });
           break;
         case 'joined-package':
-          // Successfully rejoined package room after reconnection
           console.log('Successfully rejoined package room:', message.packageId);
           break;
         case 'error':
-          // Handle WebSocket errors
           console.error('WebSocket error:', message.error);
           if (message.error === 'Package not found') {
-            // Package was deleted or doesn't exist, clear local state
             setCardPackage(null);
             setCurrentPackageId(null);
             setError('Package no longer exists');
@@ -111,8 +111,10 @@ export function useCardPackage(): UseCardPackageReturn {
     });
 
     return () => {
+      console.log('[useCardPackage] useEffect cleanup: disconnecting WebSocket');
       websocketService.disconnect();
     };
+    // NOTE: If you see double connect/disconnect logs in development, check if React Strict Mode is enabled. Strict Mode intentionally double-mounts components to help find bugs, which can cause this effect to run twice.
   }, [currentPackageId]);
 
   const joinPackage = useCallback((packageId: string) => {
@@ -150,14 +152,21 @@ export function useCardPackage(): UseCardPackageReturn {
     });
   }, [currentPackageId]);
 
-  const updateVersionSelection = useCallback((cardName: string, scryfallId: string) => {
+  const updateVersionSelection = useCallback((oracleId: string, scryfallId: string) => {
+    console.log(`useCardPackage updateVersionSelection:`, {
+      oracleId,
+      scryfallId,
+      currentPackageId
+    });
+    
     if (!currentPackageId) return;
     
-    // Update local state immediately for responsive UI
+    // Optimistic UI update
     setCardPackage(prev => {
       if (!prev) return null;
       const updatedEntries = prev.package_entries.map(entry => {
-        if (entry.name === cardName) {
+        if (entry.oracle_id === oracleId) {
+          console.log(`Updating entry ${entry.name} (oracle_id: ${entry.oracle_id}) selected_print from ${entry.selected_print} to ${scryfallId}`);
           return { ...entry, selected_print: scryfallId };
         }
         return entry;
@@ -169,8 +178,9 @@ export function useCardPackage(): UseCardPackageReturn {
     debouncedVersionSelectionSender.current({
       type: 'update-version-selection',
       packageId: currentPackageId,
-      data: { cardName, scryfallId }
+      data: { oracleId, scryfallId }
     });
+    // No immediate API fetch here; rely on WebSocket event for authoritative update
   }, [currentPackageId]);
 
   const createCardPackage = async (
@@ -191,9 +201,8 @@ export function useCardPackage(): UseCardPackageReturn {
       const result = await mtgvAPI.createCardPackage(cards, game, defaultSelection);
       setCardPackage(result);
       
-      // Join the package room for real-time updates
-      if (result.id) {
-        joinPackage(result.id);
+      if (result.package_id) {
+        joinPackage(result.package_id);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create card package');
@@ -221,8 +230,8 @@ export function useCardPackage(): UseCardPackageReturn {
       setCardPackage(result);
       
       // Join the package room for real-time updates
-      if (result.id) {
-        joinPackage(result.id);
+      if (result.package_id) {
+        joinPackage(result.package_id);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create random package');

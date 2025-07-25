@@ -2,22 +2,19 @@ import {
   Card,
   CardPrint,
   CardPackage,
-  CreateCardPackageRequest,
   CreateCardPackageResponse,
-  ExportRequest,
   ExportResponse,
   RandomPackageResponse,
   GameType,
   DefaultSelection,
   ExportType,
-  APIError,
 } from '@/types';
 
 // Enhanced error types for better error handling
 export interface ValidationError {
   field: string;
   message: string;
-  value?: any;
+  value?: unknown;
 }
 
 export interface APIErrorResponse {
@@ -53,15 +50,15 @@ class MTGVAPIService {
       // Handle validation errors specifically
       if (errorData.validationErrors && errorData.validationErrors.length > 0) {
         const validationMessages = errorData.validationErrors
-          .map(err => `${err.field}: ${err.message}`)
+          .map((err: { field: string; message: string }) => `${err.field}: ${err.message}`)
           .join(', ');
         errorMessage = `Validation errors: ${validationMessages}`;
       }
 
       const error = new Error(errorMessage);
-      (error as any).status = response.status;
-      (error as any).details = errorData.details;
-      (error as any).validationErrors = errorData.validationErrors;
+      (error as unknown as { status?: number }).status = response.status;
+      (error as unknown as { details?: unknown }).details = errorData.details;
+      (error as unknown as { validationErrors?: unknown }).validationErrors = errorData.validationErrors;
       throw error;
     }
 
@@ -83,16 +80,21 @@ class MTGVAPIService {
   async createCardPackage(
     cardList: Card[],
     game: GameType = 'paper',
-    defaultSelection: DefaultSelection = 'newest'
+    defaultSelection: DefaultSelection = 'newest',
+    packageId?: string
   ): Promise<CardPackage> {
+    const body: Record<string, unknown> = {
+      card_list: cardList,
+      game,
+      default_selection: defaultSelection
+    };
+    if (packageId) {
+      body.package_id = packageId;
+    }
     const res = await fetch('/api/card_packages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        card_list: cardList,
-        game,
-        default_selection: defaultSelection 
-      }),
+      body: JSON.stringify(body),
     });
     
     const data: CreateCardPackageResponse = await this.handleResponse(res);

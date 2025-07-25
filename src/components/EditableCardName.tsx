@@ -154,6 +154,7 @@ export default function EditableCardName({
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
+    return undefined;
   }, [isEditing]);
 
   // Handle blur

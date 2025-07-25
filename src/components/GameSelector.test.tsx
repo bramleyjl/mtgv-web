@@ -1,6 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import GameSelector from './GameSelector';
-import { GameType } from '@/types';
 
 describe('GameSelector', () => {
   const mockOnGameChange = jest.fn();

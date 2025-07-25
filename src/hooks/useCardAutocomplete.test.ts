@@ -1,6 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useCardAutocomplete } from './useCardAutocomplete';
-import { cardSearchCache, clearAllCaches } from '@/lib/cache';
+import { clearAllCaches } from '@/lib/cache';
 
 // Mock fetch globally
 const mockFetch = jest.fn();

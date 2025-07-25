@@ -85,7 +85,7 @@ describe('validation utilities', () => {
 
     it('should handle cards with undefined quantity', () => {
       const cards = [
-        { name: 'Lightning Bolt', quantity: undefined as any },
+        { name: 'Lightning Bolt', quantity: undefined as unknown as number },
         { name: 'Black Lotus', quantity: 1 }
       ];
       expect(validateCardList(cards)).toEqual({ isValid: true, totalCards: 2 });

@@ -17,21 +17,32 @@ class WebSocketService {
   }
 
   connect(): Promise<void> {
+    console.log('[WebSocketService] connect() called. Current ws:', this.ws, 'readyState:', this.ws?.readyState);
     return new Promise((resolve, reject) => {
       if (this.ws?.readyState === WebSocket.OPEN) {
+        console.log('[WebSocketService] Already connected.');
         resolve();
         return;
       }
 
       if (this.isConnecting) {
-        reject(new Error('Connection already in progress'));
+        console.log('[WebSocketService] Connection already in progress.');
+        resolve();
+        return;
+      }
+
+      if (this.ws?.readyState === WebSocket.CONNECTING) {
+        console.log('[WebSocketService] Already connecting.');
+        resolve();
         return;
       }
 
       this.isConnecting = true;
       this.ws = new WebSocket(this.url);
+      console.log('[WebSocketService] New WebSocket created:', this.ws);
 
       this.ws.onopen = () => {
+        console.log('[WebSocketService] onopen');
         this.isConnecting = false;
         this.reconnectAttempts = 0;
         this.onConnectionChangeCallback?.(true);
@@ -40,9 +51,9 @@ class WebSocketService {
       };
 
       this.ws.onclose = (event) => {
+        console.log('[WebSocketService] onclose', event);
         this.isConnecting = false;
         this.onConnectionChangeCallback?.(false);
-        
         if (!event.wasClean && this.reconnectAttempts < this.maxReconnectAttempts) {
           this.reconnectAttempts++;
           setTimeout(() => this.connect(), this.reconnectDelay * this.reconnectAttempts);
@@ -50,11 +61,13 @@ class WebSocketService {
       };
 
       this.ws.onerror = (error) => {
+        console.log('[WebSocketService] onerror', error);
         this.isConnecting = false;
         reject(error);
       };
 
       this.ws.onmessage = (event) => {
+        console.log('[WebSocketService] onmessage', event.data);
         try {
           const message: WebSocketPackageUpdate = JSON.parse(event.data);
           this.onMessageCallback?.(message);
@@ -66,8 +79,14 @@ class WebSocketService {
   }
 
   disconnect(): void {
+    console.log('[WebSocketService] disconnect() called. Current ws:', this.ws, 'readyState:', this.ws?.readyState);
     if (this.ws) {
+      if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+        console.log('[WebSocketService] Closing WebSocket.');
       this.ws.close();
+      } else {
+        console.log('[WebSocketService] WebSocket already closed or closing.');
+      }
       this.ws = null;
     }
     this.messageQueue = [];
