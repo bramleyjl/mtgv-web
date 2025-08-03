@@ -26,7 +26,7 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
   });
 
   // Check if adding the current card would exceed the limit
-  const wouldExceedLimit = (cardName: string, quantity: number): boolean => {
+  const wouldExceedLimit = (quantity: number): boolean => {
     if (!validateCardList) return false;
     
     const newCards = [...currentCards, { name: cardName, quantity }];
@@ -35,7 +35,7 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
   };
 
   // Get the maximum quantity that can be added without exceeding the limit
-  const getMaxQuantityForCard = (cardName: string): number => {
+  const getMaxQuantityForCard = (): number => {
     if (!validateCardList) return 100;
     
     const currentTotal = currentCards.reduce((sum, card) => sum + (card.quantity || 1), 0);
@@ -45,7 +45,7 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
 
   // Quantity control functions
   const handleIncreaseQuantity = () => {
-    const maxQuantity = getMaxQuantityForCard(cardName);
+    const maxQuantity = getMaxQuantityForCard();
     if (quantity < maxQuantity) {
       setQuantity(quantity + 1);
     }
@@ -63,7 +63,7 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
       setQuantity(0);
     } else {
       const newQuantity = parseInt(value) || 1;
-      const maxQuantity = getMaxQuantityForCard(cardName);
+      const maxQuantity = getMaxQuantityForCard();
       const clampedQuantity = Math.max(1, Math.min(maxQuantity, newQuantity));
       setQuantity(clampedQuantity);
     }
@@ -101,8 +101,8 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
     }
 
     // Check if adding this card would exceed the limit
-    if (wouldExceedLimit(name, quantity)) {
-      const maxQuantity = getMaxQuantityForCard(name);
+    if (wouldExceedLimit(quantity)) {
+      const maxQuantity = getMaxQuantityForCard();
       setValidationError(`Cannot add ${quantity} copies. Maximum allowed: ${maxQuantity} (would exceed 100-card limit)`);
       return false;
     }
@@ -160,7 +160,7 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
           handleSuggestionSelect(suggestions[selectedIndex]);
         } else if (cardName.trim()) {
           // If no suggestion is selected, submit the form
-          handleSubmit(e as any);
+          handleSubmit(e as React.KeyboardEvent);
         }
         break;
       case 'Escape':
@@ -217,7 +217,7 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
   }, []);
 
   // Check if submit should be disabled
-  const isSubmitDisabled = !cardName.trim() || !!validationError || wouldExceedLimit(cardName.trim(), quantity);
+  const isSubmitDisabled = !cardName.trim() || !!validationError || wouldExceedLimit(quantity);
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -306,14 +306,14 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
                 onChange={(e) => handleQuantityChange(e.target.value)}
                 onBlur={(e) => handleQuantityBlur(e.target.value)}
                 min="1"
-                max={getMaxQuantityForCard(cardName)}
+                max={getMaxQuantityForCard()}
                 className="w-10 text-center border-none focus:outline-none focus:ring-0 text-sm bg-gray-700 text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               
               <button
                 type="button"
                 onClick={handleIncreaseQuantity}
-                disabled={quantity >= getMaxQuantityForCard(cardName)}
+                disabled={quantity >= getMaxQuantityForCard()}
                 className="px-2 py-2 text-gray-300 hover:text-white disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500"
                 aria-label="Increase quantity"
               >

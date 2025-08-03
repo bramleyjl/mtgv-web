@@ -12,7 +12,7 @@ interface CacheStats {
 }
 
 class Cache {
-  private cache = new Map<string, CacheEntry<any>>();
+  private cache = new Map<string, CacheEntry<unknown>>();
   private stats = {
     hits: 0,
     misses: 0,
@@ -45,7 +45,7 @@ class Cache {
     }
 
     this.stats.hits++;
-    return entry.data;
+    return entry.data as T;
   }
 
   has(key: string): boolean {

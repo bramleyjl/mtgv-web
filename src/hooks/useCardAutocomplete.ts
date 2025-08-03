@@ -67,26 +67,31 @@ export function useCardAutocomplete({
           const cachedResult = cardSearchCache.get<{ cards: CardSuggestion[] }>(cacheKey);
           
           if (cachedResult) {
-            console.debug(`Cache hit for search: ${query}`);
-            // Ensure cached suggestions have unique IDs
-            const cachedSuggestions = cachedResult.cards.map((suggestion, index) => ({
-              ...suggestion,
-              id: `${suggestion.name}-${index}`,
-            }));
+            // Coerce all suggestions to {id, name}
+            const cachedSuggestions = cachedResult.cards.map(
+              (suggestion: string | { id?: string; name?: string }, index: number) => ({
+                id: String(
+                  typeof suggestion === 'string'
+                    ? `${suggestion}-${index}`
+                    : suggestion.id ?? `${suggestion.name ?? 'unknown'}-${index}`
+                ),
+                name: String(
+                  typeof suggestion === 'string'
+                    ? suggestion
+                    : suggestion.name ?? ''
+                ),
+              })
+            );
             setSuggestions(cachedSuggestions.slice(0, maxResults));
             setIsLoading(false);
             return;
           }
 
-          console.debug(`Cache miss for search: ${query}`);
-
           const cardObjects = await mtgvAPI.searchCards(query);
-          const transformedSuggestions: CardSuggestion[] = cardObjects.map((card: any, index: number) => ({
-            id: card.id || `${card.name}-${index}`,
-            name: card.name,
-            set: card.set,
-            set_name: card.set_name,
-            collector_number: card.collector_number,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const transformedSuggestions: CardSuggestion[] = cardObjects.map((obj: any, index: number) => ({
+            id: String(obj.id ?? `${obj.name ?? obj}-${index}`),
+            name: String(obj.name ?? obj),
           }));
 
           cardSearchCache.set(cacheKey, { cards: transformedSuggestions });
@@ -97,7 +102,6 @@ export function useCardAutocomplete({
             return;
           }
 
-          console.error('Card search error:', err);
           setError(err instanceof Error ? err.message : 'Failed to search cards');
         } finally {
           setIsLoading(false);

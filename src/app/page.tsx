@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import CardInput from "@/components/CardInput";
-import CardList from "@/components/CardList";
+import CardPackageManager from "@/components/CardPackageManager";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import { validateCardList } from "@/lib/validation";
 import { GameType, DefaultSelection, Card } from "@/types";
@@ -17,9 +17,7 @@ export default function Home() {
   // Use the card package hook for real-time updates
   const { 
     cardPackage, 
-    loading: packageLoading, 
     error: packageError, 
-    isConnected,
     updateCardList,
     clearError: clearPackageError 
   } = useCardPackage();
@@ -43,6 +41,7 @@ export default function Home() {
   // Update local cards when WebSocket receives updates
   useEffect(() => {
     if (cardPackage?.card_list) {
+      // Repopulating card list from package
       const localCards = convertToLocalCards(cardPackage.card_list);
       setCards(localCards);
     }
@@ -57,7 +56,7 @@ export default function Home() {
       setValidationError(null);
       
       // Send real-time update via WebSocket if package exists
-      if (cardPackage?.id) {
+      if (cardPackage?.package_id) {
         updateCardList(convertToAPICards(newCards));
       }
     } else {
@@ -74,7 +73,7 @@ export default function Home() {
       setValidationError(null);
       
       // Send real-time update via WebSocket if package exists
-      if (cardPackage?.id) {
+      if (cardPackage?.package_id) {
         updateCardList(convertToAPICards(newCards));
       }
     } else {
@@ -88,7 +87,7 @@ export default function Home() {
     setValidationError(null); // Clear error when removing cards
     
     // Send real-time update via WebSocket if package exists
-    if (cardPackage?.id) {
+    if (cardPackage?.package_id) {
       updateCardList(convertToAPICards(newCards));
     }
   };
@@ -131,8 +130,8 @@ export default function Home() {
             />
           </section>
 
-          {/* Card List Section */}
-          <CardList 
+          {/* Card Package Manager Section */}
+          <CardPackageManager 
             cards={cards}
             onUpdateCard={handleUpdateCard}
             onRemoveCard={handleRemoveCard}

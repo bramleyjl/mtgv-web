@@ -1,5 +1,10 @@
 import { WebSocketMessage, WebSocketPackageUpdate } from '@/types';
 
+// Type for debounced sender with cancel method
+type DebouncedSender = ((message: WebSocketMessage) => void) & {
+  cancel: () => void;
+};
+
 class WebSocketService {
   private ws: WebSocket | null = null;
   private reconnectAttempts = 0;
@@ -10,6 +15,8 @@ class WebSocketService {
   private url: string;
   private onMessageCallback: ((message: WebSocketPackageUpdate) => void) | null = null;
   private onConnectionChangeCallback: ((connected: boolean) => void) | null = null;
+  private connectionPromise: Promise<void> | null = null;
+  private shouldReconnect = true;
 
   constructor(url?: string) {
     // Use environment variable or fallback to localhost:4000
@@ -17,18 +24,21 @@ class WebSocketService {
   }
 
   connect(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (this.ws?.readyState === WebSocket.OPEN) {
-        resolve();
-        return;
-      }
 
-      if (this.isConnecting) {
-        reject(new Error('Connection already in progress'));
-        return;
-      }
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      return Promise.resolve();
+    }
 
-      this.isConnecting = true;
+    if (this.connectionPromise) {
+      return this.connectionPromise;
+    }
+
+    if (this.ws?.readyState === WebSocket.CONNECTING) {
+      return Promise.resolve();
+    }
+
+    this.isConnecting = true;
+    this.connectionPromise = new Promise((resolve, reject) => {
       this.ws = new WebSocket(this.url);
 
       this.ws.onopen = () => {
@@ -41,9 +51,11 @@ class WebSocketService {
 
       this.ws.onclose = (event) => {
         this.isConnecting = false;
+        this.connectionPromise = null;
         this.onConnectionChangeCallback?.(false);
         
-        if (!event.wasClean && this.reconnectAttempts < this.maxReconnectAttempts) {
+        // Only reconnect if we haven't explicitly disconnected
+        if (this.shouldReconnect && !event.wasClean && this.reconnectAttempts < this.maxReconnectAttempts) {
           this.reconnectAttempts++;
           setTimeout(() => this.connect(), this.reconnectDelay * this.reconnectAttempts);
         }
@@ -51,6 +63,7 @@ class WebSocketService {
 
       this.ws.onerror = (error) => {
         this.isConnecting = false;
+        this.connectionPromise = null;
         reject(error);
       };
 
@@ -63,15 +76,21 @@ class WebSocketService {
         }
       };
     });
+
+    return this.connectionPromise;
   }
 
   disconnect(): void {
+    this.shouldReconnect = false; // Prevent reconnection
     if (this.ws) {
-      this.ws.close();
+      if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+        this.ws.close();
+      }
       this.ws = null;
     }
     this.messageQueue = [];
     this.reconnectAttempts = 0;
+    this.connectionPromise = null;
   }
 
   send(message: WebSocketMessage): void {
@@ -107,11 +126,19 @@ class WebSocketService {
 // Create a singleton instance
 export const websocketService = new WebSocketService();
 
-// Debounced message sender
-export function createDebouncedSender(delay: number = 1000) {
+// Debounced message sender with better deduplication
+export function createDebouncedSender(delay: number = 1000): DebouncedSender {
   let timeoutId: NodeJS.Timeout | null = null;
+  let lastMessage: string | null = null;
   
-  return (message: WebSocketMessage) => {
+  const sender = (message: WebSocketMessage) => {
+    const messageStr = JSON.stringify(message);
+    
+    // If this is the same message as the last one, don't send it again
+    if (lastMessage === messageStr) {
+      return;
+    }
+    
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
@@ -119,6 +146,18 @@ export function createDebouncedSender(delay: number = 1000) {
     timeoutId = setTimeout(() => {
       websocketService.send(message);
       timeoutId = null;
+      lastMessage = messageStr;
     }, delay);
   };
+
+  // Add cancel method to clear pending messages
+  sender.cancel = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+    lastMessage = null;
+  };
+  
+  return sender;
 } 

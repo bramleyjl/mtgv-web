@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { mtgvAPI } from '@/lib/api';
 import { websocketService, createDebouncedSender } from '@/lib/websocket';
-import { Card, CardPackage, GameType, DefaultSelection, UseCardPackageReturn, WebSocketMessage } from '@/types';
+import { Card, CardPackage, GameType, DefaultSelection, UseCardPackageReturn, WebSocketPackageUpdate } from '@/types';
 
 const PACKAGE_ID_STORAGE_KEY = 'mtgv-current-package-id';
 
@@ -11,10 +11,25 @@ export function useCardPackage(): UseCardPackageReturn {
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [currentPackageId, setCurrentPackageId] = useState<string | null>(null);
+
+  // Create stable debounced senders
+  const debouncedCardListSender = useMemo(() => createDebouncedSender(1000), []);
+  const debouncedVersionSelectionSender = useMemo(() => createDebouncedSender(500), []);
   
-  // Debounced senders for real-time updates
-  const debouncedCardListSender = useRef(createDebouncedSender(1000));
-  const debouncedVersionSelectionSender = useRef(createDebouncedSender(500));
+  // Track the last update to prevent duplicates
+  const lastUpdateRef = useRef<{oracleId: string, scryfallId: string, timestamp: number} | null>(null);
+  
+  // Flag to prevent WebSocket messages from overriding API data during initial load
+  const isInitialLoadRef = useRef(true);
+
+  // Clear debounced sender state when package changes
+  useEffect(() => {
+    if (cardPackage?.package_id) {
+      // Clear any pending debounced messages when package changes
+      debouncedCardListSender.cancel();
+      debouncedVersionSelectionSender.cancel();
+    }
+  }, [cardPackage?.package_id, debouncedCardListSender, debouncedVersionSelectionSender]);
 
   // Restore package ID from localStorage on mount
   useEffect(() => {
@@ -22,6 +37,7 @@ export function useCardPackage(): UseCardPackageReturn {
     if (savedPackageId) {
       setCurrentPackageId(savedPackageId);
       setLoading(true);
+      isInitialLoadRef.current = true; // Set flag during initial load
       mtgvAPI.getCardPackage?.(savedPackageId)
         .then((pkg: CardPackage) => {
           setCardPackage(pkg);
@@ -30,13 +46,20 @@ export function useCardPackage(): UseCardPackageReturn {
             type: 'join-package',
             packageId: savedPackageId
           });
+          // Allow WebSocket messages after a short delay to ensure API data is set
+          setTimeout(() => {
+            isInitialLoadRef.current = false;
+          }, 1000);
         })
         .catch(() => {
           setCardPackage(null);
           setCurrentPackageId(null);
           localStorage.removeItem(PACKAGE_ID_STORAGE_KEY);
+          isInitialLoadRef.current = false;
         })
         .finally(() => setLoading(false));
+    } else {
+      isInitialLoadRef.current = false;
     }
   }, []);
 
@@ -50,7 +73,7 @@ export function useCardPackage(): UseCardPackageReturn {
     }
   }, [currentPackageId]);
 
-  // WebSocket connection and message handling
+  // WebSocket connection setup (only once)
   useEffect(() => {
     const handleConnectionChange = (connected: boolean) => {
       setIsConnected(connected);
@@ -64,32 +87,41 @@ export function useCardPackage(): UseCardPackageReturn {
       }
     };
 
-    const handleMessage = (message: any) => {
+    const handleMessage = (message: WebSocketPackageUpdate) => {
+      // Don't process WebSocket messages during initial load to prevent overriding API data
+      if (isInitialLoadRef.current) {
+        return;
+      }
+
       switch (message.type) {
-        case 'card-list-updated':
-          setCardPackage(prev => prev ? { ...prev, card_list: message.data } : null);
-          break;
         case 'version-selection-updated':
+          const data = message.data as { oracleId: string; scryfallId: string };
           setCardPackage(prev => {
             if (!prev) return null;
+            
+            // Find the entry that this update is trying to modify
+            const targetEntry = prev.package_entries.find(entry => entry.oracle_id === data.oracleId);
+            
+            // If the update doesn't match our current state, ignore it
+            if (targetEntry && targetEntry.selected_print !== data.scryfallId) {
+              return prev; // Don't update
+            }
+            // If it matches or we don't have a current state, apply the update
             const updatedEntries = prev.package_entries.map(entry => {
-              if (entry.name === message.data.cardName) {
-                return { ...entry, selected_print: message.data.scryfallId };
+              if (entry.oracle_id === data.oracleId) {
+                return { ...entry, selected_print: data.scryfallId };
               }
               return entry;
             });
             return { ...prev, package_entries: updatedEntries };
           });
           break;
+        case 'card-list-updated':
+          break;
         case 'joined-package':
-          // Successfully rejoined package room after reconnection
-          console.log('Successfully rejoined package room:', message.packageId);
           break;
         case 'error':
-          // Handle WebSocket errors
-          console.error('WebSocket error:', message.error);
           if (message.error === 'Package not found') {
-            // Package was deleted or doesn't exist, clear local state
             setCardPackage(null);
             setCurrentPackageId(null);
             setError('Package no longer exists');
@@ -106,14 +138,23 @@ export function useCardPackage(): UseCardPackageReturn {
 
     // Connect to WebSocket
     websocketService.connect().catch(err => {
-      console.warn('WebSocket connection failed:', err);
       // Don't set error for users - WebSocket is internal infrastructure
     });
 
     return () => {
-      websocketService.disconnect();
+      // Don't disconnect here - let the connection stay alive
     };
-  }, [currentPackageId]);
+  }, []); // Remove currentPackageId from dependencies
+
+  // Handle package ID changes separately
+  useEffect(() => {
+    if (currentPackageId && isConnected) {
+      websocketService.send({
+        type: 'join-package',
+        packageId: currentPackageId
+      });
+    }
+  }, [currentPackageId, isConnected]);
 
   const joinPackage = useCallback((packageId: string) => {
     setCurrentPackageId(packageId);
@@ -143,34 +184,48 @@ export function useCardPackage(): UseCardPackageReturn {
     setCardPackage(prev => prev ? { ...prev, card_list: cards } : null);
     
     // Debounced WebSocket update
-    debouncedCardListSender.current({
+    debouncedCardListSender({
       type: 'update-card-list',
       packageId: currentPackageId,
       data: cards
     });
-  }, [currentPackageId]);
+  }, [currentPackageId, debouncedCardListSender]);
 
-  const updateVersionSelection = useCallback((cardName: string, scryfallId: string) => {
+  const updateVersionSelection = useCallback((oracleId: string, scryfallId: string) => {
     if (!currentPackageId) return;
-    
-    // Update local state immediately for responsive UI
+
+    // Optimistic UI update
     setCardPackage(prev => {
       if (!prev) return null;
+      
       const updatedEntries = prev.package_entries.map(entry => {
-        if (entry.name === cardName) {
+        if (entry.oracle_id === oracleId) {
           return { ...entry, selected_print: scryfallId };
         }
         return entry;
       });
+      
       return { ...prev, package_entries: updatedEntries };
     });
-    
-    // Debounced WebSocket update
-    debouncedVersionSelectionSender.current({
+
+    // Track this update to prevent duplicate processing
+    lastUpdateRef.current = {
+      oracleId,
+      scryfallId,
+      timestamp: Date.now()
+    };
+
+    // Send WebSocket message
+    debouncedVersionSelectionSender({
       type: 'update-version-selection',
       packageId: currentPackageId,
-      data: { cardName, scryfallId }
+      data: { oracleId, scryfallId }
     });
+  }, [currentPackageId, debouncedVersionSelectionSender]);
+
+  // Clear the last update ref when the package changes
+  useEffect(() => {
+    lastUpdateRef.current = null;
   }, [currentPackageId]);
 
   const createCardPackage = async (
@@ -186,14 +241,14 @@ export function useCardPackage(): UseCardPackageReturn {
     setLoading(true);
     setError(null);
     setCardPackage(null);
+    isInitialLoadRef.current = false; // Allow WebSocket messages for new packages
 
     try {
       const result = await mtgvAPI.createCardPackage(cards, game, defaultSelection);
       setCardPackage(result);
       
-      // Join the package room for real-time updates
-      if (result.id) {
-        joinPackage(result.id);
+      if (result.package_id) {
+        joinPackage(result.package_id);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create card package');
@@ -215,14 +270,15 @@ export function useCardPackage(): UseCardPackageReturn {
     setLoading(true);
     setError(null);
     setCardPackage(null);
+    isInitialLoadRef.current = false; // Allow WebSocket messages for new packages
 
     try {
       const result = await mtgvAPI.createRandomPackage(count, game, defaultSelection);
       setCardPackage(result);
       
       // Join the package room for real-time updates
-      if (result.id) {
-        joinPackage(result.id);
+      if (result.package_id) {
+        joinPackage(result.package_id);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create random package');

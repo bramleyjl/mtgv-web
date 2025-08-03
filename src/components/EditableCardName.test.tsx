@@ -19,8 +19,7 @@ describe('EditableCardName', () => {
     mockOnCancel.mockClear();
     mockFetch.mockClear();
     // Clear cache to ensure fresh state for each test
-    const { clearAllCaches } = require('@/lib/cache');
-    clearAllCaches();
+    import('@/lib/cache').then(({ clearAllCaches }) => clearAllCaches());
   });
 
   it('renders card name as button when not editing', () => {

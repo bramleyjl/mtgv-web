@@ -24,7 +24,7 @@ export interface CardPrint {
 
 // Card Package types
 export interface CardPackage {
-  id?: string;
+  package_id?: string;
   card_list: Card[];
   game: GameType;
   package_entries: PackageEntry[];
@@ -77,7 +77,7 @@ export type ExportType = 'tcgplayer' | 'text';
 export interface APIError {
   message: string;
   status?: number;
-  details?: any;
+  details?: unknown;
 }
 
 // Component prop types
@@ -88,8 +88,8 @@ export interface CardInputProps {
 
 export interface CardDisplayProps {
   cardPackage: CardPackage | null;
-  onCardSelectionChange: (selectedPrints: CardPrint[]) => void;
-  selectedPrints: CardPrint[];
+  onVersionSelection: (oracleId: string, scryfallId: string) => void;
+  onClearPackage: () => void;
 }
 
 export interface CardVersionProps {
@@ -109,13 +109,13 @@ export interface UseCardAutocompleteReturn {
 // WebSocket types
 export interface WebSocketMessage {
   type: string;
-  data?: any;
+  data?: unknown;
   packageId?: string;
 }
 
 export interface WebSocketPackageUpdate {
   type: 'card-list-updated' | 'version-selection-updated' | 'joined-package' | 'error';
-  data?: any;
+  data?: unknown;
   packageId?: string;
   error?: string;
 }
@@ -129,7 +129,7 @@ export interface UseCardPackageReturn {
   createCardPackage: (cards: Card[], game?: GameType, defaultSelection?: DefaultSelection) => Promise<void>;
   createRandomPackage: (count: number, game?: GameType, defaultSelection?: DefaultSelection) => Promise<void>;
   updateCardList: (cards: Card[]) => void;
-  updateVersionSelection: (cardName: string, scryfallId: string) => void;
+  updateVersionSelection: (oracleId: string, scryfallId: string) => void;
   joinPackage: (packageId: string) => void;
   leavePackage: () => void;
   clearError: () => void;

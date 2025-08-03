@@ -1,6 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useCardAutocomplete } from './useCardAutocomplete';
-import { cardSearchCache, clearAllCaches } from '@/lib/cache';
+import { clearAllCaches } from '@/lib/cache';
 
 // Mock fetch globally
 const mockFetch = jest.fn();
@@ -165,7 +165,7 @@ describe('useCardAutocomplete', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.error).toBe('Card search failed: undefined Not Found');
+      expect(result.current.error).toBe('Request failed with status undefined: Not Found');
       expect(result.current.isLoading).toBe(false);
       expect(result.current.suggestions).toEqual([]);
     });

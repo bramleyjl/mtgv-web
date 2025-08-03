@@ -1,18 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 const MTGV_API_BASE_URL = process.env.MTGV_API_BASE_URL || 'http://localhost:4000';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  context: { params: { id: string } }
 ) {
-  const { id } = params;
+  const { id } = await context.params;
+  
   if (!id) {
     return NextResponse.json({ error: 'Missing package ID' }, { status: 400 });
   }
 
   try {
-    // Build the URL for the MTGV API
     const mtgvApiUrl = new URL(`/card_package/${id}`, MTGV_API_BASE_URL);
     const response = await fetch(mtgvApiUrl.toString(), {
       method: 'GET',
