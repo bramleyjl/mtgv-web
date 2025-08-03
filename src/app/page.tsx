@@ -41,7 +41,7 @@ export default function Home() {
   // Update local cards when WebSocket receives updates
   useEffect(() => {
     if (cardPackage?.card_list) {
-      console.log('Repopulating card list from package:', cardPackage.card_list);
+      // Repopulating card list from package
       const localCards = convertToLocalCards(cardPackage.card_list);
       setCards(localCards);
     }

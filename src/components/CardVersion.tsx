@@ -9,9 +9,10 @@ interface CardVersionProps {
   isSelected: boolean;
   onSelect: (scryfallId: string) => void;
   cardName: string;
+  gameType?: 'paper' | 'mtgo' | 'arena';
 }
 
-export default function CardVersion({ print, isSelected, onSelect, cardName }: CardVersionProps) {
+export default function CardVersion({ print, isSelected, onSelect, cardName, gameType = 'paper' }: CardVersionProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
 
@@ -40,7 +41,6 @@ export default function CardVersion({ print, isSelected, onSelect, cardName }: C
   const imageUrl = getImageUrl();
   const fallbackImageUrl = getFallbackImageUrl();
 
-
   const handleImageLoad = () => {
     setImageLoading(false);
   };
@@ -50,21 +50,29 @@ export default function CardVersion({ print, isSelected, onSelect, cardName }: C
     setImageLoading(false);
   };
 
-
-
-
-
   const handleClick = () => {
-    console.log(`CardVersion clicked for ${cardName}:`, {
-      scryfallId: print.scryfall_id,
-      isSelected,
-      cardName
-    });
     onSelect(print.scryfall_id);
   };
 
+  // Format price based on game type
+  const formatPrice = () => {
+    if (gameType === 'arena') {
+      return null; // No prices for Arena
+    }
+    
+    if (print.price === undefined || print.price === null) {
+      return null;
+    }
+
+    const currency = gameType === 'mtgo' ? 'Tix' : 'USD';
+    return `${currency} ${print.price.toFixed(2)}`;
+  };
+
+  const priceDisplay = formatPrice();
+
   return (
     <div 
+      data-testid="card-version"
       className={`relative cursor-pointer rounded-lg border-2 transition-all duration-200 hover:scale-105 ${
         isSelected 
           ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
@@ -73,31 +81,35 @@ export default function CardVersion({ print, isSelected, onSelect, cardName }: C
       onClick={handleClick}
     >
       {/* Card Image */}
-      <div className="relative aspect-[745/1040] w-full overflow-hidden rounded-t-lg">
-        {imageLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-200 dark:bg-gray-700">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
-          </div>
-        )}
+      <div className="relative aspect-[745/1040] w-full overflow-hidden rounded-t-lg bg-gray-200 dark:bg-gray-700">
+        {/* Always show fallback image as background */}
+        <Image
+          src={fallbackImageUrl}
+          alt="Magic card back"
+          fill
+          className="object-cover"
+        />
         
-        {!imageError && imageUrl ? (
+        {/* Show real image when available */}
+        {imageUrl && !imageError && (
           <Image
             src={imageUrl}
             alt={`${cardName} - ${print.set_name || 'Unknown Set'}`}
             fill
-            className="object-cover"
+            className={`object-cover transition-opacity duration-300 ${
+              imageLoading ? 'opacity-0' : 'opacity-100'
+            }`}
             onLoad={handleImageLoad}
             onError={handleImageError}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
-        ) : (
-          <Image
-            src={fallbackImageUrl}
-            alt="Magic card back"
-            className="w-full h-full object-cover"
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-          />
+        )}
+        
+        {/* Show spinner during loading */}
+        {imageUrl && imageLoading && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div data-testid="loading-spinner" className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+          </div>
         )}
       </div>
 
@@ -109,9 +121,9 @@ export default function CardVersion({ print, isSelected, onSelect, cardName }: C
         <div className="text-xs text-gray-500 dark:text-gray-400">
           #{print.collector_number || 'N/A'}
         </div>
-        {print.price !== undefined && (
+        {priceDisplay && (
           <div className="mt-1 text-sm font-semibold text-green-600 dark:text-green-400">
-            ${print.price.toFixed(2)}
+            {priceDisplay}
           </div>
         )}
         
@@ -119,8 +131,8 @@ export default function CardVersion({ print, isSelected, onSelect, cardName }: C
         {isSelected && (
           <div className="absolute top-2 right-2">
             <div className="rounded-full bg-blue-500 p-1">
-              <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              <svg data-testid="selected-indicator" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
               </svg>
             </div>
           </div>

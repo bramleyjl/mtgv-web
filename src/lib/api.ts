@@ -135,7 +135,8 @@ class MTGVAPIService {
 
   // Fetch card package by ID
   async getCardPackage(packageId: string): Promise<CardPackage> {
-    const res = await fetch(`/api/card_packages/${packageId}`);
+    const url = `/api/card_packages/${packageId}`;
+    const res = await fetch(url);
     const data: CreateCardPackageResponse = await this.handleResponse(res);
     return data.card_package;
   }

@@ -67,7 +67,6 @@ export function useCardAutocomplete({
           const cachedResult = cardSearchCache.get<{ cards: CardSuggestion[] }>(cacheKey);
           
           if (cachedResult) {
-            console.debug(`Cache hit for search: ${query}`);
             // Coerce all suggestions to {id, name}
             const cachedSuggestions = cachedResult.cards.map(
               (suggestion: string | { id?: string; name?: string }, index: number) => ({
@@ -88,8 +87,6 @@ export function useCardAutocomplete({
             return;
           }
 
-          console.debug(`Cache miss for search: ${query}`);
-
           const cardObjects = await mtgvAPI.searchCards(query);
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const transformedSuggestions: CardSuggestion[] = cardObjects.map((obj: any, index: number) => ({
@@ -105,7 +102,6 @@ export function useCardAutocomplete({
             return;
           }
 
-          console.error('Card search error:', err);
           setError(err instanceof Error ? err.message : 'Failed to search cards');
         } finally {
           setIsLoading(false);

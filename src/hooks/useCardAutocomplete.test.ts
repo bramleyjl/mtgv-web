@@ -165,7 +165,7 @@ describe('useCardAutocomplete', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.error).toBe('Card search failed: undefined Not Found');
+      expect(result.current.error).toBe('Request failed with status undefined: Not Found');
       expect(result.current.isLoading).toBe(false);
       expect(result.current.suggestions).toEqual([]);
     });

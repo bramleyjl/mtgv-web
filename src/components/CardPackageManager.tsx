@@ -155,12 +155,6 @@ export default function CardPackageManager({
   };
 
   const handleVersionSelection = (oracleId: string, scryfallId: string) => {
-    console.log(`CardPackageManager handleVersionSelection:`, {
-      oracleId,
-      scryfallId,
-      packageId: cardPackage?.package_id
-    });
-    // Send real-time update via WebSocket if package exists
     if (cardPackage?.package_id) {
       updateVersionSelection(oracleId, scryfallId);
     }

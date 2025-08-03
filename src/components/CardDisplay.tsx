@@ -57,15 +57,19 @@ export default function CardDisplay({
                 <div className="mt-3">
                   <p className="text-sm text-green-300 mb-3 font-medium">Select Version:</p>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                    {entry.card_prints.map((print) => (
-                      <CardVersion
-                        key={print.scryfall_id}
-                        print={print}
-                        isSelected={entry.selected_print === print.scryfall_id}
-                        onSelect={(scryfallId) => onVersionSelection(entry.oracle_id!, scryfallId)}
-                        cardName={entry.name}
-                      />
-                    ))}
+                    {entry.card_prints.map((print) => {
+                      const isSelected = entry.selected_print === print.scryfall_id;
+                      return (
+                        <CardVersion
+                          key={print.scryfall_id}
+                          print={print}
+                          isSelected={isSelected}
+                          onSelect={(scryfallId) => onVersionSelection(entry.oracle_id!, scryfallId)}
+                          cardName={entry.name}
+                          gameType={cardPackage.game}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -88,6 +92,7 @@ export default function CardDisplay({
                       isSelected={true}
                       onSelect={(scryfallId) => onVersionSelection(entry.oracle_id!, scryfallId)}
                       cardName={entry.name}
+                      gameType={cardPackage.game}
                     />
                   </div>
                   <div className="mt-2 p-2 bg-green-700 rounded text-sm text-green-200">

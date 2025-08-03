@@ -7,6 +7,7 @@ export async function GET(
   context: { params: { id: string } }
 ) {
   const { id } = await context.params;
+  
   if (!id) {
     return NextResponse.json({ error: 'Missing package ID' }, { status: 400 });
   }

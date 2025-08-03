@@ -21,11 +21,8 @@ export async function GET(request: NextRequest) {
     const cachedResult = cardSearchCache.get(cacheKey);
     
     if (cachedResult) {
-      console.debug(`API cache hit for search: ${query}`);
       return NextResponse.json(cachedResult);
     }
-
-    console.debug(`API cache miss for search: ${query}`);
 
     // Build the URL for the MTGV API
     const mtgvApiUrl = new URL('/cards', MTGV_API_BASE_URL);
