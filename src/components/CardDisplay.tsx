@@ -2,6 +2,7 @@
 
 import React from 'react';
 import CardVersion from './CardVersion';
+import ExportButtons from './ExportButtons';
 import { CardPackage } from '@/types';
 
 interface CardDisplayProps {
@@ -25,12 +26,18 @@ export default function CardDisplay({
         <h2 className="text-xl font-semibold text-green-200">
           Package Results
         </h2>
-        <button
-          onClick={onClearPackage}
-          className="text-green-400 hover:text-green-300 text-sm font-medium"
-        >
-          Clear Package
-        </button>
+        <div className="flex items-center gap-3">
+          <ExportButtons 
+            packageId={cardPackage.package_id} 
+            disabled={!cardPackage.package_id}
+          />
+          <button
+            onClick={onClearPackage}
+            className="text-green-400 hover:text-green-300 text-sm font-medium"
+          >
+            Clear Package
+          </button>
+        </div>
       </div>
       
       <div className="space-y-2 text-sm text-green-100 mb-4">

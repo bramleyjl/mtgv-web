@@ -6,7 +6,13 @@ import { CardPackage, PackageEntry } from '@/types';
 
 // Mock CardVersion component
 jest.mock('./CardVersion', () => {
-  return function MockCardVersion({ print, isSelected, onSelect, cardName, gameType }: any) {
+  return function MockCardVersion({ print, isSelected, onSelect, cardName, gameType }: {
+    print: { scryfall_id: string; set_name?: string; collector_number?: string };
+    isSelected: boolean;
+    onSelect: (scryfallId: string) => void;
+    cardName: string;
+    gameType: string;
+  }) {
     return (
       <div 
         data-testid="card-version"

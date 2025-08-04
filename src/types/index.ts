@@ -17,6 +17,14 @@ export interface CardPrint {
     large?: string;
   }>;
   price?: number;
+  prices?: {
+    usd?: { $numberDecimal: string } | number | null;
+    usd_foil?: { $numberDecimal: string } | number | null;
+    usd_etched?: { $numberDecimal: string } | number | null;
+    eur?: { $numberDecimal: string } | number | null;
+    eur_foil?: { $numberDecimal: string } | number | null;
+    tix?: { $numberDecimal: string } | number | null;
+  };
   set_name?: string;
   collector_number?: string;
   rarity?: string;

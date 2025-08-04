@@ -50,7 +50,7 @@ export function useCardPackage(): UseCardPackageReturn {
             isInitialLoadRef.current = false;
           }, 1000);
         })
-        .catch((error) => {
+        .catch(() => {
           setCardPackage(null);
           setCurrentPackageId(null);
           localStorage.removeItem(PACKAGE_ID_STORAGE_KEY);
@@ -123,7 +123,7 @@ export function useCardPackage(): UseCardPackageReturn {
     websocketService.onMessage(handleMessage);
 
     // Connect to WebSocket
-    websocketService.connect().catch(err => {
+    websocketService.connect().catch(() => {
       // Don't set error for users - WebSocket is internal infrastructure
     });
 

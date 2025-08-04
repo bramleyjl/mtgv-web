@@ -6,7 +6,13 @@ import { CardPrint } from '@/types';
 
 // Mock Next.js Image component
 jest.mock('next/image', () => {
-  return function MockImage({ src, alt, onLoad, onError, fill, ...props }: any) {
+  return function MockImage({ src, alt, onLoad, onError, ...props }: {
+    src: string;
+    alt: string;
+    onLoad?: () => void;
+    onError?: () => void;
+    [key: string]: unknown;
+  }) {
     return (
       <img
         src={src}
@@ -26,7 +32,10 @@ describe('CardVersion', () => {
     count: 1,
     name: 'Lightning Bolt',
     image_uris: [{ normal: 'https://api.scryfall.com/cards/test-image.jpg' }],
-    price: 2.50,
+    prices: {
+      usd: { $numberDecimal: '2.50' },
+      tix: null
+    },
     set_name: 'Magic 2010',
     collector_number: '133',
     rarity: 'common'
@@ -114,9 +123,17 @@ describe('CardVersion', () => {
     });
 
     it('should format Tix price correctly for MTGO game type', () => {
-      render(<CardVersion {...defaultProps} gameType="mtgo" />);
+      const printWithTix: CardPrint = {
+        ...mockPrint,
+        prices: {
+          usd: { $numberDecimal: '2.50' },
+          tix: { $numberDecimal: '1.25' }
+        }
+      };
       
-      expect(screen.getByText('Tix 2.50')).toBeInTheDocument();
+      render(<CardVersion {...defaultProps} print={printWithTix} gameType="mtgo" />);
+      
+      expect(screen.getByText('Tix 1.25')).toBeInTheDocument();
     });
 
     it('should not show price for Arena game type', () => {
@@ -128,7 +145,10 @@ describe('CardVersion', () => {
     it('should not show price when price is null', () => {
       const printWithoutPrice = {
         ...mockPrint,
-        price: null
+        prices: {
+          usd: null,
+          tix: null
+        }
       } as unknown as CardPrint;
       
       render(<CardVersion {...defaultProps} print={printWithoutPrice} />);
@@ -139,7 +159,7 @@ describe('CardVersion', () => {
     it('should not show price when price is undefined', () => {
       const printWithoutPrice = {
         ...mockPrint,
-        price: undefined
+        prices: undefined
       } as unknown as CardPrint;
       
       render(<CardVersion {...defaultProps} print={printWithoutPrice} />);
@@ -150,7 +170,10 @@ describe('CardVersion', () => {
     it('should format price with two decimal places', () => {
       const printWithDecimalPrice: CardPrint = {
         ...mockPrint,
-        price: 1.999
+        prices: {
+          usd: { $numberDecimal: '1.999' },
+          tix: null
+        }
       };
       
       render(<CardVersion {...defaultProps} print={printWithDecimalPrice} />);

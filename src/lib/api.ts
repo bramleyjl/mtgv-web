@@ -1,12 +1,11 @@
 import {
   Card,
-  CardPrint,
-  CardPackage,
-  CreateCardPackageResponse,
-  ExportResponse,
-  RandomPackageResponse,
   GameType,
   DefaultSelection,
+  CardPackage,
+  CreateCardPackageResponse,
+  RandomPackageResponse,
+  ExportResponse,
   ExportType,
 } from '@/types';
 
@@ -119,7 +118,7 @@ class MTGVAPIService {
 
   // Export card package
   async exportCardPackage(
-    selectedPrints: CardPrint[],
+    packageId: string,
     exportType: ExportType = 'tcgplayer'
   ): Promise<ExportResponse> {
     const params = new URLSearchParams({
@@ -128,7 +127,7 @@ class MTGVAPIService {
     const res = await fetch(`/api/card_packages/export?${params.toString()}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ selected_prints: selectedPrints }),
+      body: JSON.stringify({ package_id: packageId }),
     });
     return this.handleResponse(res);
   }
