@@ -35,8 +35,7 @@ export default function CardPackageManager({
     clearError, 
     clearCardPackage,
     updateCardList,
-    updateVersionSelection,
-    isConnected
+    updateVersionSelection
   } = useCardPackage();
 
   // Convert local card format to API format for WebSocket updates
@@ -182,7 +181,6 @@ export default function CardPackageManager({
         loading={loading}
         error={error}
         clearError={clearError}
-        isConnected={isConnected}
       />
 
       {/* Card Display Section */}

@@ -9,7 +9,6 @@ export function useCardPackage(): UseCardPackageReturn {
   const [cardPackage, setCardPackage] = useState<CardPackage | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
   const [currentPackageId, setCurrentPackageId] = useState<string | null>(null);
 
   // Create stable debounced senders
@@ -51,7 +50,7 @@ export function useCardPackage(): UseCardPackageReturn {
             isInitialLoadRef.current = false;
           }, 1000);
         })
-        .catch(() => {
+        .catch((error) => {
           setCardPackage(null);
           setCurrentPackageId(null);
           localStorage.removeItem(PACKAGE_ID_STORAGE_KEY);
@@ -75,18 +74,6 @@ export function useCardPackage(): UseCardPackageReturn {
 
   // WebSocket connection setup (only once)
   useEffect(() => {
-    const handleConnectionChange = (connected: boolean) => {
-      setIsConnected(connected);
-      
-      // If reconnected and we have a package, rejoin the room
-      if (connected && currentPackageId) {
-        websocketService.send({
-          type: 'join-package',
-          packageId: currentPackageId
-        });
-      }
-    };
-
     const handleMessage = (message: WebSocketPackageUpdate) => {
       // Don't process WebSocket messages during initial load to prevent overriding API data
       if (isInitialLoadRef.current) {
@@ -133,7 +120,6 @@ export function useCardPackage(): UseCardPackageReturn {
       }
     };
 
-    websocketService.onConnectionChange(handleConnectionChange);
     websocketService.onMessage(handleMessage);
 
     // Connect to WebSocket
@@ -148,13 +134,13 @@ export function useCardPackage(): UseCardPackageReturn {
 
   // Handle package ID changes separately
   useEffect(() => {
-    if (currentPackageId && isConnected) {
+    if (currentPackageId) {
       websocketService.send({
         type: 'join-package',
         packageId: currentPackageId
       });
     }
-  }, [currentPackageId, isConnected]);
+  }, [currentPackageId]);
 
   const joinPackage = useCallback((packageId: string) => {
     setCurrentPackageId(packageId);
@@ -305,14 +291,13 @@ export function useCardPackage(): UseCardPackageReturn {
     cardPackage,
     loading,
     error,
-    isConnected,
     createCardPackage,
     createRandomPackage,
     updateCardList,
     updateVersionSelection,
     joinPackage,
     leavePackage,
-    clearError,
     clearCardPackage,
+    clearError
   };
 } 
