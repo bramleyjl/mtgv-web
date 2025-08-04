@@ -19,7 +19,7 @@ export default function Home() {
     cardPackage, 
     error: packageError, 
     updateCardList,
-    clearError: clearPackageError 
+    clearError: clearPackageError
   } = useCardPackage();
 
   // Convert local card format to API format

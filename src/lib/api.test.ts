@@ -125,16 +125,13 @@ describe('MTGV API Service', () => {
         json: async () => mockResponse,
       });
 
-      const selectedPrints = [
-        { scryfall_id: '123', count: 4, name: 'Lightning Bolt', set_name: 'M10' },
-        { scryfall_id: '456', count: 4, name: 'Counterspell', set_name: 'M10' },
-      ];
-      const result = await mtgvAPI.exportCardPackage(selectedPrints, 'tcgplayer');
+      const packageId = 'test-package-id';
+      const result = await mtgvAPI.exportCardPackage(packageId, 'tcgplayer');
 
       expect(fetch).toHaveBeenCalledWith('/api/card_packages/export?type=tcgplayer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ selected_prints: selectedPrints }),
+        body: JSON.stringify({ package_id: packageId }),
       });
       expect(result).toEqual(mockResponse);
     });
@@ -147,8 +144,8 @@ describe('MTGV API Service', () => {
         json: async () => errorResponse,
       });
 
-      const selectedPrints = [{ scryfall_id: '789', count: 1, name: 'Test Card', set_name: 'M10' }];
-      await expect(mtgvAPI.exportCardPackage(selectedPrints)).rejects.toThrow('Export failed');
+      const packageId = 'test-package-id';
+      await expect(mtgvAPI.exportCardPackage(packageId)).rejects.toThrow('Export failed');
     });
   });
 }); 

@@ -17,6 +17,14 @@ export interface CardPrint {
     large?: string;
   }>;
   price?: number;
+  prices?: {
+    usd?: { $numberDecimal: string } | number | null;
+    usd_foil?: { $numberDecimal: string } | number | null;
+    usd_etched?: { $numberDecimal: string } | number | null;
+    eur?: { $numberDecimal: string } | number | null;
+    eur_foil?: { $numberDecimal: string } | number | null;
+    tix?: { $numberDecimal: string } | number | null;
+  };
   set_name?: string;
   collector_number?: string;
   rarity?: string;
@@ -125,13 +133,12 @@ export interface UseCardPackageReturn {
   cardPackage: CardPackage | null;
   loading: boolean;
   error: string | null;
-  isConnected: boolean;
   createCardPackage: (cards: Card[], game?: GameType, defaultSelection?: DefaultSelection) => Promise<void>;
   createRandomPackage: (count: number, game?: GameType, defaultSelection?: DefaultSelection) => Promise<void>;
   updateCardList: (cards: Card[]) => void;
   updateVersionSelection: (oracleId: string, scryfallId: string) => void;
   joinPackage: (packageId: string) => void;
   leavePackage: () => void;
-  clearError: () => void;
   clearCardPackage: () => void;
+  clearError: () => void;
 } 

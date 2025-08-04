@@ -1,7 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useCardPackage } from './useCardPackage';
 import { mtgvAPI } from '@/lib/api';
-import type { WebSocketPackageUpdate } from '@/types';
 
 // Mock localStorage
 const localStorageMock = {
@@ -53,7 +52,6 @@ describe('useCardPackage', () => {
       expect(result.current.cardPackage).toBeNull();
       expect(result.current.loading).toBe(false);
       expect(result.current.error).toBeNull();
-      expect(result.current.isConnected).toBe(false);
     });
 
     it('should load saved package from localStorage', async () => {

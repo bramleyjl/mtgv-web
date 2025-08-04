@@ -11,7 +11,6 @@ class WebSocketService {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
   private messageQueue: WebSocketMessage[] = [];
-  private isConnecting = false;
   private url: string;
   private onMessageCallback: ((message: WebSocketPackageUpdate) => void) | null = null;
   private onConnectionChangeCallback: ((connected: boolean) => void) | null = null;
@@ -37,12 +36,10 @@ class WebSocketService {
       return Promise.resolve();
     }
 
-    this.isConnecting = true;
     this.connectionPromise = new Promise((resolve, reject) => {
       this.ws = new WebSocket(this.url);
 
       this.ws.onopen = () => {
-        this.isConnecting = false;
         this.reconnectAttempts = 0;
         this.onConnectionChangeCallback?.(true);
         this.flushMessageQueue();
@@ -50,7 +47,6 @@ class WebSocketService {
       };
 
       this.ws.onclose = (event) => {
-        this.isConnecting = false;
         this.connectionPromise = null;
         this.onConnectionChangeCallback?.(false);
         
@@ -62,7 +58,6 @@ class WebSocketService {
       };
 
       this.ws.onerror = (error) => {
-        this.isConnecting = false;
         this.connectionPromise = null;
         reject(error);
       };

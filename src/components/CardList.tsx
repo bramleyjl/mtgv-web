@@ -24,7 +24,6 @@ interface CardListProps {
   loading: boolean;
   error: string | null;
   clearError: () => void;
-  isConnected: boolean;
 }
 
 export default function CardList({ 
@@ -44,8 +43,7 @@ export default function CardList({
   onCreatePackage,
     loading, 
     error, 
-    clearError, 
-    isConnected
+    clearError
 }: CardListProps) {
 
   // Get the maximum quantity that can be set for a specific card without exceeding the limit
@@ -185,14 +183,6 @@ export default function CardList({
           */}
         </div>
         
-        <div className="flex items-center gap-2 text-sm text-gray-400">
-          <span>WebSocket:</span>
-          <span className={`px-2 py-1 rounded text-xs ${
-            isConnected ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-          }`}>
-            {isConnected ? 'Connected' : 'Disconnected'}
-          </span>
-        </div>
       </div>
 
       {/* Card List */}

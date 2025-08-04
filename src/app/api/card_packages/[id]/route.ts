@@ -3,10 +3,10 @@ import { NextResponse } from 'next/server';
 const MTGV_API_BASE_URL = process.env.MTGV_API_BASE_URL || 'http://localhost:4000';
 
 export async function GET(
-  request: Request,
-  context: { params: { id: string } }
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
+  const { id } = await params;
   
   if (!id) {
     return NextResponse.json({ error: 'Missing package ID' }, { status: 400 });

@@ -135,7 +135,7 @@ describe('Cache Functionality', () => {
 
       // Simulate API call
       const response = await fetch('/api/card_packages/test-package');
-      const data = await response.json();
+      await response.json();
 
       // Verify response doesn't have cache headers
       expect(response.headers?.get('Cache-Control')).not.toBe('public, max-age=3600');

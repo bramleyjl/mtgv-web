@@ -60,12 +60,36 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
       return null; // No prices for Arena
     }
     
-    if (print.price === undefined || print.price === null) {
+    // Extract price from the prices object based on game type
+    let price = null;
+    if (print.prices) {
+      if (gameType === 'mtgo') {
+        price = print.prices.tix;
+      } else {
+        // For paper, use USD price
+        price = print.prices.usd;
+      }
+    }
+    
+    if (price === undefined || price === null) {
+      return null;
+    }
+
+    // Handle MongoDB Decimal128 format
+    const priceValue = typeof price === 'object' && price.$numberDecimal 
+      ? parseFloat(price.$numberDecimal) 
+      : typeof price === 'number' 
+        ? price 
+        : typeof price === 'string'
+          ? parseFloat(price)
+          : null;
+
+    if (priceValue === null || isNaN(priceValue)) {
       return null;
     }
 
     const currency = gameType === 'mtgo' ? 'Tix' : 'USD';
-    return `${currency} ${print.price.toFixed(2)}`;
+    return `${currency} ${priceValue.toFixed(2)}`;
   };
 
   const priceDisplay = formatPrice();
