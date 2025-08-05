@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useCardAutocomplete } from '../hooks/useCardAutocomplete';
-import { validateCardName } from '../lib/validation';
+import { useCardAutocomplete } from '@/hooks/useCardAutocomplete';
 
 interface EditableCardNameProps {
   cardName: string;
@@ -10,184 +9,153 @@ interface EditableCardNameProps {
   onCancel: () => void;
 }
 
-export default function EditableCardName({ 
-  cardName, 
-  onUpdate, 
-  onCancel
-}: EditableCardNameProps) {
-  const [name, setName] = useState(cardName);
+export default function EditableCardName({ cardName, onUpdate, onCancel }: EditableCardNameProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(cardName);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [validationError, setValidationError] = useState<string | null>(null);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  const { suggestions, isLoading, error, searchCards, clearSuggestions } = useCardAutocomplete({
-    minLength: 2,
-    debounceMs: 300,
-    maxResults: 15,
-  });
+  const { suggestions, isLoading, error, searchCards } = useCardAutocomplete();
 
-  // Handle input changes
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleDoubleClick = () => {
+    setIsEditing(true);
+    setEditValue(cardName);
+    setValidationError(null);
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setName(value);
-    setShowSuggestions(true);
-    setSelectedIndex(-1);
-    setValidationError(null); // Clear validation error when typing
-    
-    if (value.trim()) {
-      searchCards(value);
-    } else {
-      clearSuggestions();
-      setShowSuggestions(false);
-    }
-  };
-
-  // Validate card name
-  const validateInput = (name: string): boolean => {
-    const nameValidation = validateCardName(name);
-    if (!nameValidation.isValid) {
-      setValidationError(nameValidation.error || 'Invalid card name');
-      return false;
-    }
-
+    setEditValue(value);
     setValidationError(null);
-    return true;
-  };
+    setSelectedIndex(0);
 
-  // Handle suggestion selection
-  const handleSuggestionSelect = (suggestion: { name: string; id: string }) => {
-    if (validateInput(suggestion.name)) {
-      setName(suggestion.name);
-      onUpdate(suggestion.name);
-      setIsEditing(false);
-      setShowSuggestions(false);
-      setSelectedIndex(-1);
-      clearSuggestions();
-    }
-  };
-
-  // Handle keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (showSuggestions && suggestions.length > 0) {
-      switch (e.key) {
-        case 'ArrowDown':
-          e.preventDefault();
-          const nextIndex = selectedIndex < suggestions.length - 1 ? selectedIndex + 1 : 0;
-          setSelectedIndex(nextIndex);
-          scrollToSuggestion(nextIndex);
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          const prevIndex = selectedIndex > 0 ? selectedIndex - 1 : suggestions.length - 1;
-          setSelectedIndex(prevIndex);
-          scrollToSuggestion(prevIndex);
-          break;
-        case 'Enter':
-          e.preventDefault();
-          if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
-            handleSuggestionSelect(suggestions[selectedIndex]);
-          } else {
-            // Submit current value
-            if (validateInput(name.trim())) {
-              onUpdate(name.trim());
-              setIsEditing(false);
-              setShowSuggestions(false);
-              setSelectedIndex(-1);
-              clearSuggestions();
-            }
-          }
-          break;
-        case 'Escape':
-          e.preventDefault();
-          onCancel();
-          break;
-      }
+    if (value.trim().length >= 2) {
+      searchCards(value.trim());
+      setShowSuggestions(true);
     } else {
-      switch (e.key) {
-        case 'Enter':
-          e.preventDefault();
-          if (validateInput(name.trim())) {
-            onUpdate(name.trim());
-            setIsEditing(false);
-          }
-          break;
-        case 'Escape':
-          e.preventDefault();
-          onCancel();
-          break;
-      }
+      setShowSuggestions(false);
     }
   };
 
-  // Scroll to suggestion when using keyboard navigation
-  const scrollToSuggestion = (index: number) => {
-    if (suggestionsRef.current) {
-      const suggestionElements = suggestionsRef.current.querySelectorAll('button');
-      const targetElement = suggestionElements[index];
-      if (targetElement) {
-        targetElement.scrollIntoView({
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedIndex((prev) => 
+          prev < suggestions.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedIndex((prev) => 
+          prev > 0 ? prev - 1 : suggestions.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
+          handleSuggestionSelect(suggestions[selectedIndex]);
+        }
+        break;
+      case 'Escape':
+        setShowSuggestions(false);
+        setSelectedIndex(0);
+        break;
+    }
+  };
+
+  const handleSuggestionSelect = (suggestion: { name: string; id: string }) => {
+    setEditValue(suggestion.name);
+    setShowSuggestions(false);
+    setSelectedIndex(0);
+    setValidationError(null);
+    inputRef.current?.focus();
+  };
+
+  const handleSubmit = () => {
+    const trimmedValue = editValue.trim();
+    
+    if (!trimmedValue) {
+      setValidationError('Card name cannot be empty');
+      return;
+    }
+
+    if (trimmedValue === cardName) {
+      setIsEditing(false);
+      setValidationError(null);
+      return;
+    }
+
+    onUpdate(trimmedValue);
+    setIsEditing(false);
+    setValidationError(null);
+    setShowSuggestions(false);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditValue(cardName);
+    setValidationError(null);
+    setShowSuggestions(false);
+    onCancel();
+  };
+
+  // Auto-scroll to selected suggestion
+  useEffect(() => {
+    if (selectedIndex >= 0 && suggestionsRef.current) {
+      const selectedElement = suggestionsRef.current.children[selectedIndex] as HTMLElement;
+      if (selectedElement) {
+        selectedElement.scrollIntoView({
           block: 'nearest',
           behavior: 'smooth'
         });
       }
     }
-  };
+  }, [selectedIndex]);
 
-  // Handle clicks outside suggestions
+  // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        suggestionsRef.current &&
-        !suggestionsRef.current.contains(event.target as Node) &&
-        inputRef.current &&
-        !inputRef.current.contains(event.target as Node)
+        inputRef.current && 
+        !inputRef.current.contains(event.target as Node) &&
+        suggestionsRef.current && 
+        !suggestionsRef.current.contains(event.target as Node)
       ) {
         setShowSuggestions(false);
-        setSelectedIndex(-1);
+        setSelectedIndex(0);
       }
     };
 
-    if (isEditing) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-    return undefined;
-  }, [isEditing]);
-
-  // Handle blur
-  const handleBlur = () => {
-    // Small delay to allow for suggestion clicks
-    setTimeout(() => {
-      if (!suggestionsRef.current?.contains(document.activeElement)) {
-        if (validateInput(name.trim())) {
-          onUpdate(name.trim());
-          setIsEditing(false);
-          setShowSuggestions(false);
-          setSelectedIndex(-1);
-          clearSuggestions();
-        }
-      }
-    }, 100);
-  };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   if (isEditing) {
     return (
-      <div className="relative flex-1 min-w-0">
+      <div className="relative flex-1">
         <input
           ref={inputRef}
           type="text"
-          value={name}
+          value={editValue}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onBlur={handleBlur}
+          onBlur={handleSubmit}
           onFocus={() => setShowSuggestions(true)}
-          className={`w-full px-2 py-1 bg-gray-600 border rounded text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-            validationError ? 'border-red-500' : 'border-gray-500'
-          }`}
-          autoFocus
+          className="input-field-large"
         />
         
         {/* Validation error */}
@@ -201,16 +169,16 @@ export default function EditableCardName({
         {showSuggestions && (suggestions.length > 0 || isLoading || error) && (
           <div
             ref={suggestionsRef}
-            className="absolute z-20 w-full mt-1 bg-gray-700 border border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto"
+            className="autocomplete-dropdown"
           >
-            {isLoading && suggestions.length === 0 && (
-              <div className="px-3 py-2 text-sm text-gray-400">
+            {isLoading && (
+              <div className="autocomplete-item">
                 Searching...
               </div>
             )}
             
-            {error && suggestions.length === 0 && (
-              <div className="px-3 py-2 text-sm text-red-400">
+            {error && (
+              <div className="autocomplete-item-error">
                 {error}
               </div>
             )}
@@ -236,11 +204,11 @@ export default function EditableCardName({
   }
 
   return (
-    <button
-      onClick={() => setIsEditing(true)}
-      className="text-left font-medium text-gray-200 truncate hover:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-inset rounded px-1 py-0.5"
+    <span
+      onDoubleClick={handleDoubleClick}
+      className="text-left font-medium text-gray-200 truncate hover:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-inset rounded px-1 py-0.5 cursor-pointer"
     >
       {cardName}
-    </button>
+    </span>
   );
 } 
