@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { CardPrint } from '@/types';
 
@@ -13,11 +13,13 @@ interface CardVersionProps {
 }
 
 export default function CardVersion({ print, isSelected, onSelect, cardName, gameType = 'paper' }: CardVersionProps) {
-  const [imageError, setImageError] = useState(false);
-  const [imageLoading, setImageLoading] = useState(true);
+  // Use refs to track image loading state that persists across re-renders
+  const imageLoadingRef = useRef(true);
+  const imageErrorRef = useRef(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
 
-  // Extract image URL from image_uris or use image_url if available
-  const getImageUrl = () => {
+  // Memoize the image URL to prevent unnecessary recalculations
+  const imageUrl = useMemo(() => {
     if (print.image_url) {
       return print.image_url;
     }
@@ -31,31 +33,34 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
     }
     
     return null;
-  };
+  }, [print.image_url, print.image_uris]);
 
   // Magic card back image as fallback (local file)
-  const getFallbackImageUrl = () => {
-    return '/magic-card-back.jpg';
-  };
+  const fallbackImageUrl = '/magic-card-back.jpg';
 
-  const imageUrl = getImageUrl();
-  const fallbackImageUrl = getFallbackImageUrl();
+  // Reset loading state when image URL changes
+  useMemo(() => {
+    imageLoadingRef.current = true;
+    imageErrorRef.current = false;
+  }, [imageUrl]);
 
-  const handleImageLoad = () => {
-    setImageLoading(false);
-  };
+  const handleImageLoad = useCallback(() => {
+    imageLoadingRef.current = false;
+    setForceUpdate(prev => prev + 1);
+  }, []);
 
-  const handleImageError = () => {
-    setImageError(true);
-    setImageLoading(false);
-  };
+  const handleImageError = useCallback(() => {
+    imageErrorRef.current = true;
+    imageLoadingRef.current = false;
+    setForceUpdate(prev => prev + 1);
+  }, []);
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     onSelect(print.scryfall_id);
-  };
+  }, [onSelect, print.scryfall_id]);
 
   // Format price based on game type
-  const formatPrice = () => {
+  const priceDisplay = useMemo(() => {
     if (gameType === 'arena') {
       return null; // No prices for Arena
     }
@@ -90,9 +95,7 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
 
     const currency = gameType === 'mtgo' ? 'Tix' : 'USD';
     return `${currency} ${priceValue.toFixed(2)}`;
-  };
-
-  const priceDisplay = formatPrice();
+  }, [print.prices, gameType]);
 
   return (
     <div 
@@ -115,13 +118,13 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
         />
         
         {/* Show real image when available */}
-        {imageUrl && !imageError && (
+        {imageUrl && !imageErrorRef.current && (
           <Image
             src={imageUrl}
             alt={`${cardName} - ${print.set_name || 'Unknown Set'}`}
             fill
             className={`object-cover transition-opacity duration-300 ${
-              imageLoading ? 'opacity-0' : 'opacity-100'
+              imageLoadingRef.current ? 'opacity-0' : 'opacity-100'
             }`}
             onLoad={handleImageLoad}
             onError={handleImageError}
@@ -130,7 +133,7 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
         )}
         
         {/* Show spinner during loading */}
-        {imageUrl && imageLoading && (
+        {imageUrl && imageLoadingRef.current && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div data-testid="loading-spinner" className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
           </div>

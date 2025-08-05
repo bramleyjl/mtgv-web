@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useCardAutocomplete } from '../hooks/useCardAutocomplete';
-import { validateCardName } from '../lib/validation';
+import { useCardAutocomplete } from '@/hooks/useCardAutocomplete';
+import { validateCardList } from '@/lib/validation';
 
 interface CardInputProps {
   onAddCard: (cardName: string, quantity: number) => void;
@@ -14,36 +14,32 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
   const [cardName, setCardName] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [validationError, setValidationError] = useState<string | null>(null);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  const { suggestions, isLoading, error, searchCards, clearSuggestions } = useCardAutocomplete({
-    minLength: 2,
-    debounceMs: 300,
-    maxResults: 15,
-  });
+  const { suggestions, isLoading, error, searchCards } = useCardAutocomplete();
 
-  // Check if adding the current card would exceed the limit
+  // Check if adding this card would exceed the limit
   const wouldExceedLimit = (quantity: number): boolean => {
     if (!validateCardList) return false;
     
-    const newCards = [...currentCards, { name: cardName, quantity }];
-    const validation = validateCardList(newCards);
+    const testCards = [...currentCards, { name: cardName.trim(), quantity }];
+    const validation = validateCardList(testCards);
     return !validation.isValid;
   };
 
-  // Get the maximum quantity that can be added without exceeding the limit
+  // Get the maximum quantity that can be set for this card without exceeding the limit
   const getMaxQuantityForCard = (): number => {
     if (!validateCardList) return 100;
     
-    const currentTotal = currentCards.reduce((sum, card) => sum + (card.quantity || 1), 0);
-    const remainingSlots = 100 - currentTotal;
+    const otherCardsTotal = currentCards.reduce((sum, card) => sum + (card.quantity || 1), 0);
+    const remainingSlots = 100 - otherCardsTotal;
     return Math.max(1, Math.min(100, remainingSlots));
   };
 
-  // Quantity control functions
   const handleIncreaseQuantity = () => {
     const maxQuantity = getMaxQuantityForCard();
     if (quantity < maxQuantity) {
@@ -76,34 +72,46 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
     }
   };
 
-  // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setCardName(value);
-    setShowSuggestions(true);
-    setSelectedIndex(-1);
-    setValidationError(null); // Clear validation error when typing
-    
-    if (value.trim()) {
-      searchCards(value);
+    setValidationError(null);
+    setSelectedIndex(0);
+
+    if (value.trim().length >= 2) {
+      searchCards(value.trim());
+      setShowSuggestions(true);
     } else {
-      clearSuggestions();
       setShowSuggestions(false);
     }
   };
 
-  // Validate card name
+  // Validate card name input
   const validateInput = (name: string): boolean => {
-    const nameValidation = validateCardName(name);
-    if (!nameValidation.isValid) {
-      setValidationError(nameValidation.error || 'Invalid card name');
+    if (!name.trim()) {
+      setValidationError('Card name is required');
+      return false;
+    }
+
+    if (name.trim().length < 2) {
+      setValidationError('Card name must be at least 2 characters');
+      return false;
+    }
+
+    // Check if card already exists in the list
+    const existingCard = currentCards.find(
+      card => card.name.toLowerCase() === name.trim().toLowerCase()
+    );
+    if (existingCard) {
+      setValidationError(`"${name.trim()}" is already in your list`);
       return false;
     }
 
     // Check if adding this card would exceed the limit
     if (wouldExceedLimit(quantity)) {
-      const maxQuantity = getMaxQuantityForCard();
-      setValidationError(`Cannot add ${quantity} copies. Maximum allowed: ${maxQuantity} (would exceed 100-card limit)`);
+      const otherCardsTotal = currentCards.reduce((sum, card) => sum + (card.quantity || 1), 0);
+      const remainingSlots = 100 - otherCardsTotal;
+      setValidationError(`Cannot add card: would exceed 100-card limit (${remainingSlots} slots remaining)`);
       return false;
     }
 
@@ -111,104 +119,67 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
     return true;
   };
 
-  // Show validation error immediately when cardName or quantity changes
-  useEffect(() => {
-    if (cardName.trim()) {
-      validateInput(cardName.trim());
-    } else {
-      setValidationError(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardName, quantity, currentCards]);
-
-  // Handle suggestion selection
   const handleSuggestionSelect = (suggestion: { name: string; id: string }) => {
-    if (validateInput(suggestion.name)) {
-      // Add the card directly to the list
-      onAddCard(suggestion.name, quantity);
-      
-      // Reset the form
-      setCardName('');
-      setQuantity(1);
-      setShowSuggestions(false);
-      setSelectedIndex(-1);
-      clearSuggestions();
-      inputRef.current?.focus();
-    }
+    setCardName(suggestion.name);
+    setShowSuggestions(false);
+    setSelectedIndex(0);
+    setValidationError(null);
+    inputRef.current?.focus();
   };
 
-  // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!showSuggestions || suggestions.length === 0) return;
 
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        const nextIndex = selectedIndex < suggestions.length - 1 ? selectedIndex + 1 : 0;
-        setSelectedIndex(nextIndex);
-        scrollToSuggestion(nextIndex);
+        setSelectedIndex((prev) => 
+          prev < suggestions.length - 1 ? prev + 1 : 0
+        );
         break;
       case 'ArrowUp':
         e.preventDefault();
-        const prevIndex = selectedIndex > 0 ? selectedIndex - 1 : suggestions.length - 1;
-        setSelectedIndex(prevIndex);
-        scrollToSuggestion(prevIndex);
+        setSelectedIndex((prev) => 
+          prev > 0 ? prev - 1 : suggestions.length - 1
+        );
         break;
       case 'Enter':
         e.preventDefault();
         if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
           handleSuggestionSelect(suggestions[selectedIndex]);
-        } else if (cardName.trim()) {
-          // If no suggestion is selected, submit the form
-          handleSubmit(e as React.KeyboardEvent);
         }
         break;
       case 'Escape':
         setShowSuggestions(false);
-        setSelectedIndex(-1);
-        clearSuggestions();
+        setSelectedIndex(0);
         break;
     }
   };
 
-  // Scroll to suggestion when using keyboard navigation
-  const scrollToSuggestion = (index: number) => {
-    if (suggestionsRef.current) {
-      const suggestionElements = suggestionsRef.current.querySelectorAll('button');
-      const targetElement = suggestionElements[index];
-      if (targetElement) {
-        targetElement.scrollIntoView({
+  // Auto-scroll to selected suggestion
+  useEffect(() => {
+    if (selectedIndex >= 0 && suggestionsRef.current) {
+      const selectedElement = suggestionsRef.current.children[selectedIndex] as HTMLElement;
+      if (selectedElement) {
+        selectedElement.scrollIntoView({
           block: 'nearest',
           behavior: 'smooth'
         });
       }
     }
-  };
+  }, [selectedIndex]);
 
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (cardName.trim() && validateInput(cardName.trim())) {
-      onAddCard(cardName.trim(), quantity);
-      setCardName('');
-      setQuantity(1);
-      setShowSuggestions(false);
-      setSelectedIndex(-1);
-      clearSuggestions();
-    }
-  };
-
-  // Handle clicks outside suggestions
+  // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        suggestionsRef.current &&
-        !suggestionsRef.current.contains(event.target as Node) &&
-        inputRef.current &&
-        !inputRef.current.contains(event.target as Node)
+        inputRef.current && 
+        !inputRef.current.contains(event.target as Node) &&
+        suggestionsRef.current && 
+        !suggestionsRef.current.contains(event.target as Node)
       ) {
         setShowSuggestions(false);
-        setSelectedIndex(-1);
+        setSelectedIndex(0);
       }
     };
 
@@ -216,7 +187,19 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Check if submit should be disabled
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (validateInput(cardName)) {
+      onAddCard(cardName.trim(), quantity);
+      setCardName('');
+      setQuantity(1);
+      setValidationError(null);
+      setShowSuggestions(false);
+      setSelectedIndex(0);
+    }
+  };
+
   const isSubmitDisabled = !cardName.trim() || !!validationError || wouldExceedLimit(quantity);
 
   return (
@@ -224,7 +207,7 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
-            <label htmlFor="cardName" className="block text-sm font-medium text-gray-200 mb-1">
+            <label htmlFor="cardName" className="label">
               Card Name
             </label>
             <input
@@ -236,14 +219,14 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
               onKeyDown={handleKeyDown}
               onFocus={() => setShowSuggestions(true)}
               placeholder="Enter card name..."
-              className={`w-full px-3 py-2 bg-gray-700 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white placeholder-gray-400 ${
+              className={`input-field-large ${
                 validationError ? 'border-red-500' : 'border-gray-600'
               }`}
             />
             
             {/* Validation error */}
             {validationError && (
-              <div className="mt-1 text-sm text-red-400">
+              <div className="text-error text-body-small">
                 {validationError}
               </div>
             )}
@@ -252,16 +235,16 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
             {showSuggestions && (suggestions.length > 0 || isLoading || error) && (
               <div
                 ref={suggestionsRef}
-                className="absolute z-10 w-full mt-1 bg-gray-700 border border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto"
+                className="autocomplete-dropdown"
               >
                 {isLoading && (
-                  <div className="px-3 py-2 text-sm text-gray-400">
+                  <div className="autocomplete-item">
                     Searching...
                   </div>
                 )}
                 
                 {error && (
-                  <div className="px-3 py-2 text-sm text-red-400">
+                  <div className="autocomplete-item-error">
                     {error}
                   </div>
                 )}
@@ -285,15 +268,15 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
           </div>
           
           <div className="w-full sm:w-28">
-            <label htmlFor="quantity" className="block text-sm font-medium text-gray-200 mb-1">
+            <label htmlFor="quantity" className="label">
               Qty
             </label>
-            <div className="flex items-center border border-gray-600 rounded-md bg-gray-700">
+            <div className="input-container">
               <button
                 type="button"
                 onClick={handleDecreaseQuantity}
                 disabled={quantity <= 1}
-                className="px-2 py-2 text-gray-300 hover:text-white disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="btn-quantity"
                 aria-label="Decrease quantity"
               >
                 -
@@ -307,14 +290,14 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
                 onBlur={(e) => handleQuantityBlur(e.target.value)}
                 min="1"
                 max={getMaxQuantityForCard()}
-                className="w-10 text-center border-none focus:outline-none focus:ring-0 text-sm bg-gray-700 text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="input-field"
               />
               
               <button
                 type="button"
                 onClick={handleIncreaseQuantity}
                 disabled={quantity >= getMaxQuantityForCard()}
-                className="px-2 py-2 text-gray-300 hover:text-white disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="btn-quantity"
                 aria-label="Increase quantity"
               >
                 +
@@ -326,7 +309,7 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
         <button
           type="submit"
           disabled={isSubmitDisabled}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-primary-large"
         >
           Add Card Manually
         </button>

@@ -1,48 +1,56 @@
 'use client';
 
+import React from 'react';
 import { GameType } from '@/types';
 
 interface GameSelectorProps {
   selectedGame: GameType;
   onGameChange: (game: GameType) => void;
-  className?: string;
 }
 
-export default function GameSelector({ selectedGame, onGameChange, className = '' }: GameSelectorProps) {
-  const gameOptions: { value: GameType; label: string; description: string }[] = [
-    { value: 'paper', label: 'Paper', description: 'Physical card prices' },
-    { value: 'mtgo', label: 'MTGO', description: 'Magic Online prices' },
-    { value: 'arena', label: 'Arena', description: 'Magic Arena prices' }
-  ];
-
+export default function GameSelector({ selectedGame, onGameChange }: GameSelectorProps) {
   return (
-    <div className={`bg-gray-800 rounded-lg p-4 border border-gray-700 ${className}`}>
-      <div className="mb-3">
-        <h3 className="text-lg font-semibold text-white">Game Type</h3>
-        <p className="text-sm text-gray-400">Select the platform for card pricing</p>
+    <div className="card-section">
+      <div className="mb-medium">
+        <h3 className="text-heading-small">Game Type</h3>
+        <p className="text-body-small text-body-muted">Select the platform for card pricing</p>
       </div>
       
-      <div className="flex flex-wrap gap-2">
-        {gameOptions.map((option) => (
-          <button
-            key={option.value}
-            onClick={() => onGameChange(option.value)}
-            className={`
-              px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200
-              ${selectedGame === option.value
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
-              }
-            `}
-            title={option.description}
-          >
-            {option.label}
-          </button>
-        ))}
+      <div className="flex-center gap-small">
+        <button
+          onClick={() => onGameChange('paper')}
+          className={`btn-game ${
+            selectedGame === 'paper'
+              ? 'btn-game-active'
+              : 'btn-game-inactive'
+          }`}
+        >
+          Paper
+        </button>
+        <button
+          onClick={() => onGameChange('mtgo')}
+          className={`btn-game ${
+            selectedGame === 'mtgo'
+              ? 'btn-game-active'
+              : 'btn-game-inactive'
+          }`}
+        >
+          MTGO
+        </button>
+        <button
+          onClick={() => onGameChange('arena')}
+          className={`btn-game ${
+            selectedGame === 'arena'
+              ? 'btn-game-active'
+              : 'btn-game-inactive'
+          }`}
+        >
+          Arena
+        </button>
       </div>
       
-      <div className="mt-2 text-xs text-gray-500">
-        Currently selected: <span className="text-blue-400 font-medium">{selectedGame}</span>
+      <div className="mt-small text-body-xs text-body-muted">
+        Currently selected: <span className="text-info font-medium">{selectedGame}</span>
       </div>
     </div>
   );
