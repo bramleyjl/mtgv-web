@@ -186,7 +186,7 @@ export default function CardList({
       </div>
 
       {/* Card List */}
-      <div className="space-y-2">
+      <div className="gap-small">
         {cards.map((card, index) => (
           <div
             key={`${card.name}-${index}`}

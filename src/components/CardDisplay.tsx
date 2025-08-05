@@ -47,7 +47,7 @@ export default function CardDisplay({
       </div>
       
       {cardPackage.package_entries && cardPackage.package_entries.length > 0 ? (
-        <div className="space-y-4">
+        <div className="gap-medium">
           {cardPackage.package_entries.map((entry, index) => (
             <div key={`${entry.oracle_id || entry.name}-${index}`} className="display-entry">
               <div className="display-entry-header">

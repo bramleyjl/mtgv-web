@@ -204,8 +204,8 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex flex-col sm:flex-row gap-4">
+      <form onSubmit={handleSubmit} className="gap-medium">
+        <div className="flex flex-col sm:flex-row gap-medium">
           <div className="flex-1 relative">
             <label htmlFor="cardName" className="label">
               Card Name
@@ -226,7 +226,7 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
             
             {/* Validation error */}
             {validationError && (
-              <div className="text-error text-body-small">
+              <div className="text-error text-body-small mt-small">
                 {validationError}
               </div>
             )}
@@ -254,7 +254,7 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
                     key={suggestion.id}
                     type="button"
                     onClick={() => handleSuggestionSelect(suggestion)}
-                    className={`w-full text-left px-3 py-2 text-sm focus:outline-none text-gray-200 ${
+                    className={`w-full text-left px-3 py-2 text-sm focus:outline-none text-body-secondary ${
                       index === selectedIndex 
                         ? 'bg-blue-600 text-white' 
                         : 'hover:bg-gray-600'

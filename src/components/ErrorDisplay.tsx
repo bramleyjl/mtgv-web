@@ -38,18 +38,18 @@ export default function ErrorDisplay({
   };
 
   return (
-    <div className={`p-4 border rounded-lg ${getErrorStyles()} ${className}`}>
-      <div className="flex items-start justify-between">
-        <div className="flex items-start space-x-2">
-          <span className="text-lg">{getIcon()}</span>
+    <div className={`error-container ${getErrorStyles()} ${className}`}>
+      <div className="error-content">
+        <div className="flex-start gap-small">
+          <span className="error-icon">{getIcon()}</span>
           <div className="flex-1">
-            <p className="text-sm font-medium">{error}</p>
+            <p className="error-text">{error}</p>
           </div>
         </div>
         {onDismiss && (
           <button
             onClick={onDismiss}
-            className="ml-4 text-sm opacity-70 hover:opacity-100 transition-opacity"
+            className="error-dismiss"
             aria-label="Dismiss error"
           >
             ✕

@@ -22,12 +22,12 @@ export default function ExportButtons({ packageId, disabled = false }: ExportBut
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3">
+    <div className="export-container">
       {/* TCGPlayer Export Button */}
       <button
         onClick={handleTCGPlayerExport}
         disabled={disabled || exportLoading || !packageId}
-        className="flex-1 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+        className="btn-export-tcgplayer"
       >
         {exportLoading ? (
           <>
@@ -48,7 +48,7 @@ export default function ExportButtons({ packageId, disabled = false }: ExportBut
       <button
         onClick={handleTextExport}
         disabled={disabled || exportLoading || !packageId}
-        className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+        className="btn-export-text"
       >
         {exportLoading ? (
           <>
@@ -67,12 +67,12 @@ export default function ExportButtons({ packageId, disabled = false }: ExportBut
 
       {/* Success Display */}
       {exportSuccess && (
-        <div className="col-span-full mt-3 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-          <div className="flex justify-between items-start">
-            <span className="text-sm">{exportSuccess}</span>
+        <div className="export-success">
+          <div className="flex-between">
+            <span className="export-message">{exportSuccess}</span>
             <button
               onClick={clearExportSuccess}
-              className="ml-2 text-green-500 hover:text-green-700"
+              className="export-dismiss"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -84,12 +84,12 @@ export default function ExportButtons({ packageId, disabled = false }: ExportBut
 
       {/* Error Display */}
       {exportError && (
-        <div className="col-span-full mt-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-          <div className="flex justify-between items-start">
-            <span className="text-sm">{exportError}</span>
+        <div className="export-error">
+          <div className="flex-between">
+            <span className="export-message">{exportError}</span>
             <button
               onClick={clearExportError}
-              className="ml-2 text-red-500 hover:text-red-700"
+              className="export-dismiss-error"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

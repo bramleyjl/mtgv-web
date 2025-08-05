@@ -160,7 +160,7 @@ export default function EditableCardName({ cardName, onUpdate, onCancel }: Edita
         
         {/* Validation error */}
         {validationError && (
-          <div className="absolute top-full left-0 mt-1 text-xs text-red-400 z-30 bg-gray-800 px-2 py-1 rounded border border-red-500">
+          <div className="absolute top-full left-0 mt-small text-body-xs text-error z-30 bg-gray-800 px-2 py-1 rounded border border-red-500">
             {validationError}
           </div>
         )}
@@ -188,7 +188,7 @@ export default function EditableCardName({ cardName, onUpdate, onCancel }: Edita
                 key={suggestion.id}
                 type="button"
                 onClick={() => handleSuggestionSelect(suggestion)}
-                className={`w-full text-left px-3 py-2 text-sm focus:outline-none text-gray-200 ${
+                className={`w-full text-left px-3 py-2 text-sm focus:outline-none text-body-secondary ${
                   index === selectedIndex 
                     ? 'bg-blue-600 text-white' 
                     : 'hover:bg-gray-600'
@@ -206,7 +206,7 @@ export default function EditableCardName({ cardName, onUpdate, onCancel }: Edita
   return (
     <span
       onDoubleClick={handleDoubleClick}
-      className="text-left font-medium text-gray-200 truncate hover:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-inset rounded px-1 py-0.5 cursor-pointer"
+      className="text-left font-medium text-body-secondary truncate hover:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-inset rounded px-1 py-0.5 cursor-pointer"
     >
       {cardName}
     </span>

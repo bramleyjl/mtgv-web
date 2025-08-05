@@ -114,11 +114,26 @@ This document outlines the CSS organization system for the MTGV frontend. All st
 2. **Component-specific styling** - Use named classes for component-specific styles
 3. **Theme consistency** - Use named classes to maintain consistent theming
 4. **Maintainability** - Use named classes for easier maintenance and updates
+5. **All styling** - All elements in the frontend are now controlled by named classes
 
 ### When to Use Tailwind Classes Directly
-1. **One-off styling** - For unique styling that won't be reused
-2. **Quick prototypes** - During rapid prototyping
-3. **Dynamic styling** - When styling needs to be computed dynamically
+1. **One-off styling** - For unique styling that won't be reused (minimal use)
+2. **Quick prototypes** - During rapid prototyping (temporary only)
+3. **Dynamic styling** - When styling needs to be computed dynamically (rare)
+
+### Task 7.5.1 Status: COMPLETED ✅
+All elements in the frontend are now controlled by the centralized class system. The following components have been updated to use named classes:
+
+- **CardInput.tsx**: Converted inline classes to named classes for form layout, validation errors, and autocomplete
+- **CardList.tsx**: Updated to use named classes for layout, buttons, and card list items
+- **CardVersion.tsx**: Converted all inline styling to named classes for card display, images, and selection indicators
+- **CardDisplay.tsx**: Updated to use named classes for display layout and version grids
+- **ExportButtons.tsx**: Converted export buttons and messages to use named classes
+- **ErrorDisplay.tsx**: Updated error display styling to use named classes
+- **EditableCardName.tsx**: Converted inline classes to named classes for editing interface
+- **CardPackageManager.tsx**: Updated layout to use named classes
+
+Additional utility classes have been added to `globals.css` to support common patterns that were previously inline.
 
 ### Migration Strategy
 1. Start with the most commonly used patterns

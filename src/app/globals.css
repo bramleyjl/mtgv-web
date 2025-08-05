@@ -435,6 +435,152 @@ body {
   @apply flex items-start;
 }
 
+/* Additional utility classes for common patterns */
+.text-left {
+  @apply text-left;
+}
+
+.truncate {
+  @apply truncate;
+}
+
+.hover\:text-white:hover {
+  @apply text-white;
+}
+
+.focus\:outline-none:focus {
+  @apply outline-none;
+}
+
+.focus\:ring-1:focus {
+  @apply ring-1;
+}
+
+.focus\:ring-blue-500:focus {
+  @apply ring-blue-500;
+}
+
+.focus\:ring-inset:focus {
+  @apply ring-inset;
+}
+
+.cursor-pointer {
+  @apply cursor-pointer;
+}
+
+.z-30 {
+  @apply z-30;
+}
+
+.bg-gray-800 {
+  @apply bg-gray-800;
+}
+
+.border-red-500 {
+  @apply border-red-500;
+}
+
+.rounded {
+  @apply rounded;
+}
+
+.px-1 {
+  @apply px-1;
+}
+
+.py-0\.5 {
+  @apply py-0.5;
+}
+
+.px-2 {
+  @apply px-2;
+}
+
+.py-1 {
+  @apply py-1;
+}
+
+/* Additional layout and sizing utilities */
+.w-full {
+  @apply w-full;
+}
+
+.max-w-2xl {
+  @apply max-w-2xl;
+}
+
+.mx-auto {
+  @apply mx-auto;
+}
+
+.flex-1 {
+  @apply flex-1;
+}
+
+.relative {
+  @apply relative;
+}
+
+.absolute {
+  @apply absolute;
+}
+
+.inset-0 {
+  @apply inset-0;
+}
+
+.top-full {
+  @apply top-full;
+}
+
+.left-0 {
+  @apply left-0;
+}
+
+.w-4 {
+  @apply w-4;
+}
+
+.h-4 {
+  @apply h-4;
+}
+
+.border-2 {
+  @apply border-2;
+}
+
+.border-white {
+  @apply border-white;
+}
+
+.border-t-transparent {
+  @apply border-t-transparent;
+}
+
+.rounded-full {
+  @apply rounded-full;
+}
+
+.animate-spin {
+  @apply animate-spin;
+}
+
+.font-medium {
+  @apply font-medium;
+}
+
+.flex-col {
+  @apply flex-col;
+}
+
+.sm\:flex-row {
+  @apply sm:flex-row;
+}
+
+.sm\:w-28 {
+  @apply sm:w-28;
+}
+
 .gap-small {
   @apply gap-2;
 }
