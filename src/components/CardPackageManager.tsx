@@ -160,7 +160,7 @@ export default function CardPackageManager({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="gap-large">
       {/* Card List Section */}
       <CardList 
         cards={cards}

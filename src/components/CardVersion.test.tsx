@@ -226,21 +226,21 @@ describe('CardVersion', () => {
       render(<CardVersion {...defaultProps} isSelected={true} />);
       
       const cardElement = screen.getByTestId('card-version');
-      expect(cardElement).toHaveClass('border-blue-500', 'bg-blue-50');
+      expect(cardElement).toHaveClass('card-version-selected');
     });
 
     it('should apply unselected styling when isSelected is false', () => {
       render(<CardVersion {...defaultProps} isSelected={false} />);
       
       const cardElement = screen.getByTestId('card-version');
-      expect(cardElement).toHaveClass('border-gray-300', 'hover:border-gray-400');
+      expect(cardElement).toHaveClass('card-version-unselected');
     });
 
     it('should have hover effects', () => {
       render(<CardVersion {...defaultProps} />);
       
       const cardElement = screen.getByTestId('card-version');
-      expect(cardElement).toHaveClass('hover:scale-105', 'transition-all', 'duration-200');
+      expect(cardElement).toHaveClass('hover-scale');
     });
   });
 

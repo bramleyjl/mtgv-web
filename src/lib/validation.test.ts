@@ -60,7 +60,7 @@ describe('validation utilities', () => {
 
   describe('validateCardList', () => {
     it('should validate empty card list', () => {
-      expect(validateCardList([])).toEqual({ isValid: true, totalCards: 0 });
+      expect(validateCardList([])).toEqual({ isValid: true, entryCount: 0 });
     });
 
     it('should validate card list within limit', () => {
@@ -68,18 +68,19 @@ describe('validation utilities', () => {
         { name: 'Lightning Bolt', quantity: 4 },
         { name: 'Black Lotus', quantity: 1 }
       ];
-      expect(validateCardList(cards)).toEqual({ isValid: true, totalCards: 5 });
+      expect(validateCardList(cards)).toEqual({ isValid: true, entryCount: 2 });
     });
 
-    it('should reject card list exceeding 100 cards', () => {
-      const cards = [
-        { name: 'Lightning Bolt', quantity: 50 },
-        { name: 'Black Lotus', quantity: 51 }
-      ];
+    it('should reject card list exceeding 100 entries', () => {
+      // Create 101 card entries to exceed the limit
+      const cards = Array.from({ length: 101 }, (_, i) => ({
+        name: `Card ${i + 1}`,
+        quantity: 1
+      }));
       expect(validateCardList(cards)).toEqual({ 
         isValid: false, 
-        error: 'Total cards (101) exceeds the limit of 100 cards',
-        totalCards: 101
+        error: 'Card list has 101 entries, which exceeds the limit of 100 entries',
+        entryCount: 101
       });
     });
 
@@ -88,7 +89,7 @@ describe('validation utilities', () => {
         { name: 'Lightning Bolt', quantity: undefined as unknown as number },
         { name: 'Black Lotus', quantity: 1 }
       ];
-      expect(validateCardList(cards)).toEqual({ isValid: true, totalCards: 2 });
+      expect(validateCardList(cards)).toEqual({ isValid: true, entryCount: 2 });
     });
   });
 

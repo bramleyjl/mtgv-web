@@ -24,3 +24,629 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ===== LAYOUT CLASSES ===== */
+
+/* Main container layouts */
+.page-container {
+  @apply min-h-screen p-8 bg-gray-900;
+}
+
+.content-wrapper {
+  @apply max-w-4xl mx-auto;
+}
+
+.main-content {
+  @apply space-y-8;
+}
+
+.section-spacing {
+  @apply space-y-4;
+}
+
+/* ===== HEADER CLASSES ===== */
+
+.page-header {
+  @apply text-center mb-8;
+}
+
+.page-title {
+  @apply text-3xl font-bold text-white mb-2;
+}
+
+.section-header {
+  @apply text-xl font-semibold text-white mb-4;
+}
+
+/* ===== CARD SECTION CLASSES ===== */
+
+.card-section {
+  @apply bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700;
+}
+
+.card-input-section {
+  @apply bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700;
+}
+
+.card-list-section {
+  @apply bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700;
+}
+
+.card-display-section {
+  @apply bg-green-900 rounded-lg shadow-lg p-6 border border-green-700;
+}
+
+/* ===== BUTTON CLASSES ===== */
+
+/* Primary buttons */
+.btn-primary {
+  @apply px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed font-medium;
+}
+
+.btn-primary-large {
+  @apply w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed font-medium;
+}
+
+/* Secondary buttons */
+.btn-secondary {
+  @apply px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-medium;
+}
+
+/* Game type buttons */
+.btn-game {
+  @apply px-3 py-1 rounded text-sm font-medium transition-colors;
+}
+
+.btn-game-active {
+  @apply bg-blue-600 text-white;
+}
+
+.btn-game-inactive {
+  @apply bg-gray-600 text-gray-300 hover:bg-gray-500;
+}
+
+/* Default selection buttons */
+.btn-default {
+  @apply px-2 py-1 rounded text-xs font-medium transition-colors;
+}
+
+.btn-default-active {
+  @apply bg-green-600 text-white;
+}
+
+.btn-default-inactive {
+  @apply bg-gray-600 text-gray-300 hover:bg-gray-500;
+}
+
+/* Quantity control buttons */
+.btn-quantity {
+  @apply px-2 py-1 text-gray-300 hover:text-white disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500;
+}
+
+.btn-remove {
+  @apply px-2 py-1 text-red-400 hover:text-red-300 focus:outline-none focus:ring-1 focus:ring-red-500 rounded;
+}
+
+/* Export buttons */
+.btn-export-tcgplayer {
+  @apply flex-1 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2;
+}
+
+.btn-export-text {
+  @apply flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2;
+}
+
+/* ===== FORM CLASSES ===== */
+
+/* Input containers */
+.input-container {
+  @apply flex items-center border border-gray-600 rounded-md bg-gray-700;
+}
+
+.input-field {
+  @apply w-10 text-center border-none focus:outline-none focus:ring-0 text-sm bg-gray-700 text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none;
+}
+
+.input-field-large {
+  @apply w-full px-4 py-2 bg-gray-700 text-white rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+}
+
+/* Label classes */
+.label {
+  @apply block text-sm font-medium text-gray-200 mb-1;
+}
+
+/* ===== CARD LIST CLASSES ===== */
+
+.card-list-item {
+  @apply flex justify-between items-center py-3 px-4 bg-gray-700 rounded-md hover:bg-gray-600 transition-colors border border-gray-600;
+}
+
+.card-list-content {
+  @apply flex items-center gap-4 flex-1 min-w-0;
+}
+
+.card-list-controls {
+  @apply flex items-center gap-2;
+}
+
+.quantity-controls {
+  @apply flex items-center border border-gray-500 rounded-md bg-gray-600;
+}
+
+/* ===== CARD VERSION CLASSES ===== */
+
+.card-version {
+  @apply relative cursor-pointer rounded-lg border-2 transition-all duration-200 hover:scale-105;
+}
+
+.card-version-selected {
+  @apply border-blue-500 bg-blue-50 dark:bg-blue-900/20;
+}
+
+.card-version-unselected {
+  @apply border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500;
+}
+
+.card-image-container {
+  @apply relative aspect-[745/1040] w-full overflow-hidden rounded-t-lg bg-gray-200 dark:bg-gray-700;
+}
+
+.card-image {
+  @apply object-cover transition-opacity duration-300;
+}
+
+.card-image-loading {
+  @apply opacity-0;
+}
+
+.card-image-loaded {
+  @apply opacity-100;
+}
+
+.card-info {
+  @apply p-3;
+}
+
+.card-set-name {
+  @apply text-sm font-medium text-gray-900 dark:text-white;
+}
+
+.card-number {
+  @apply text-xs text-gray-500 dark:text-gray-400;
+}
+
+.card-price {
+  @apply mt-1 text-sm font-semibold text-green-600 dark:text-green-400;
+}
+
+.selection-indicator {
+  @apply absolute top-2 right-2;
+}
+
+.selection-indicator-bg {
+  @apply rounded-full bg-blue-500 p-1;
+}
+
+.selection-indicator-icon {
+  @apply h-4 w-4 text-white;
+}
+
+/* ===== TEXT CLASSES ===== */
+
+/* Headings */
+.text-heading-large {
+  @apply text-3xl font-bold text-white mb-2;
+}
+
+.text-heading-medium {
+  @apply text-xl font-semibold text-white mb-4;
+}
+
+.text-heading-small {
+  @apply text-lg font-semibold text-white;
+}
+
+/* Body text */
+.text-body-primary {
+  @apply text-white;
+}
+
+.text-body-secondary {
+  @apply text-gray-200;
+}
+
+.text-body-tertiary {
+  @apply text-gray-300;
+}
+
+.text-body-muted {
+  @apply text-gray-400;
+}
+
+.text-body-small {
+  @apply text-sm;
+}
+
+.text-body-xs {
+  @apply text-xs;
+}
+
+/* Status text */
+.text-success {
+  @apply text-green-400;
+}
+
+.text-warning {
+  @apply text-yellow-300;
+}
+
+.text-error {
+  @apply text-red-400;
+}
+
+.text-info {
+  @apply text-blue-400;
+}
+
+/* ===== DISPLAY CLASSES ===== */
+
+.display-header {
+  @apply flex justify-between items-start mb-4;
+}
+
+.display-title {
+  @apply text-xl font-semibold text-green-200;
+}
+
+.display-controls {
+  @apply flex items-center gap-3;
+}
+
+.display-clear-btn {
+  @apply text-green-400 hover:text-green-300 text-sm font-medium;
+}
+
+.display-info {
+  @apply space-y-2 text-sm text-green-100 mb-4;
+}
+
+.display-entry {
+  @apply bg-green-800 rounded-lg p-4 border border-green-600;
+}
+
+.display-entry-header {
+  @apply flex justify-between items-start mb-3;
+}
+
+.display-entry-title {
+  @apply font-medium text-green-200 text-lg;
+}
+
+.display-entry-status {
+  @apply text-yellow-300 text-sm bg-yellow-900 px-2 py-1 rounded;
+}
+
+.display-version-section {
+  @apply mt-3;
+}
+
+.display-version-title {
+  @apply text-sm text-green-300 mb-3 font-medium;
+}
+
+.display-version-grid {
+  @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3;
+}
+
+.display-selected-info {
+  @apply mt-3 p-2 bg-green-700 rounded text-sm text-green-200;
+}
+
+.display-empty {
+  @apply text-center py-8;
+}
+
+.display-empty-text {
+  @apply text-yellow-300 text-lg;
+}
+
+/* ===== AUTocomplete CLASSES ===== */
+
+.autocomplete-dropdown {
+  @apply absolute z-10 w-full mt-1 bg-gray-700 border border-gray-600 rounded-md shadow-lg max-h-80 overflow-y-auto;
+}
+
+.autocomplete-item {
+  @apply px-3 py-2 text-sm text-gray-400;
+}
+
+.autocomplete-item-error {
+  @apply px-3 py-2 text-sm text-red-400;
+}
+
+/* ===== ERROR CLASSES ===== */
+
+.error-container {
+  @apply rounded-lg p-4 border;
+}
+
+.error-container-error {
+  @apply bg-red-900 border-red-700;
+}
+
+.error-container-warning {
+  @apply bg-yellow-900 border-yellow-700;
+}
+
+.error-content {
+  @apply flex items-start;
+}
+
+.error-icon {
+  @apply text-lg;
+}
+
+.error-text {
+  @apply text-sm font-medium;
+}
+
+.error-dismiss {
+  @apply ml-4 text-sm opacity-70 hover:opacity-100 transition-opacity;
+}
+
+/* ===== EXPORT CLASSES ===== */
+
+.export-container {
+  @apply grid grid-cols-2 gap-3;
+}
+
+.export-success {
+  @apply col-span-full mt-3 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg;
+}
+
+.export-error {
+  @apply col-span-full mt-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg;
+}
+
+.export-message {
+  @apply text-sm;
+}
+
+.export-dismiss {
+  @apply ml-2 text-green-500 hover:text-green-700;
+}
+
+.export-dismiss-error {
+  @apply ml-2 text-red-500 hover:text-red-700;
+}
+
+/* ===== UTILITY CLASSES ===== */
+
+.flex-center {
+  @apply flex items-center justify-center;
+}
+
+.flex-between {
+  @apply flex justify-between items-center;
+}
+
+.flex-start {
+  @apply flex items-start;
+}
+
+/* Additional utility classes for common patterns */
+.text-left {
+  @apply text-left;
+}
+
+.truncate {
+  @apply truncate;
+}
+
+.hover\:text-white:hover {
+  @apply text-white;
+}
+
+.focus\:outline-none:focus {
+  @apply outline-none;
+}
+
+.focus\:ring-1:focus {
+  @apply ring-1;
+}
+
+.focus\:ring-blue-500:focus {
+  @apply ring-blue-500;
+}
+
+.focus\:ring-inset:focus {
+  @apply ring-inset;
+}
+
+.cursor-pointer {
+  @apply cursor-pointer;
+}
+
+.z-30 {
+  @apply z-30;
+}
+
+.bg-gray-800 {
+  @apply bg-gray-800;
+}
+
+.border-red-500 {
+  @apply border-red-500;
+}
+
+.rounded {
+  @apply rounded;
+}
+
+.px-1 {
+  @apply px-1;
+}
+
+.py-0\.5 {
+  @apply py-0.5;
+}
+
+.px-2 {
+  @apply px-2;
+}
+
+.py-1 {
+  @apply py-1;
+}
+
+/* Additional layout and sizing utilities */
+.w-full {
+  @apply w-full;
+}
+
+.max-w-2xl {
+  @apply max-w-2xl;
+}
+
+.mx-auto {
+  @apply mx-auto;
+}
+
+.flex-1 {
+  @apply flex-1;
+}
+
+.relative {
+  @apply relative;
+}
+
+.absolute {
+  @apply absolute;
+}
+
+.inset-0 {
+  @apply inset-0;
+}
+
+.top-full {
+  @apply top-full;
+}
+
+.left-0 {
+  @apply left-0;
+}
+
+.w-4 {
+  @apply w-4;
+}
+
+.h-4 {
+  @apply h-4;
+}
+
+.border-2 {
+  @apply border-2;
+}
+
+.border-white {
+  @apply border-white;
+}
+
+.border-t-transparent {
+  @apply border-t-transparent;
+}
+
+.rounded-full {
+  @apply rounded-full;
+}
+
+.animate-spin {
+  @apply animate-spin;
+}
+
+.font-medium {
+  @apply font-medium;
+}
+
+.flex-col {
+  @apply flex-col;
+}
+
+.sm\:flex-row {
+  @apply sm:flex-row;
+}
+
+.sm\:w-28 {
+  @apply sm:w-28;
+}
+
+.gap-small {
+  @apply gap-2;
+}
+
+.gap-medium {
+  @apply gap-4;
+}
+
+.gap-large {
+  @apply gap-6;
+}
+
+.mb-small {
+  @apply mb-2;
+}
+
+.mb-medium {
+  @apply mb-4;
+}
+
+.mb-large {
+  @apply mb-8;
+}
+
+.mt-small {
+  @apply mt-1;
+}
+
+.mt-medium {
+  @apply mt-3;
+}
+
+.mt-large {
+  @apply mt-6;
+}
+
+/* ===== RESPONSIVE CLASSES ===== */
+
+.responsive-grid {
+  @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3;
+}
+
+.responsive-single {
+  @apply grid grid-cols-1 gap-3;
+}
+
+
+
+/* ===== ANIMATION CLASSES ===== */
+
+.transition-all {
+  @apply transition-all duration-200;
+}
+
+.transition-colors {
+  @apply transition-colors duration-200;
+}
+
+.transition-opacity {
+  @apply transition-opacity duration-300;
+}
+
+.hover-scale {
+  @apply hover:scale-105;
+}
+
+.loading-spinner {
+  @apply h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent;
+}

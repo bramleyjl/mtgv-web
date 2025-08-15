@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { CardPrint } from '@/types';
 
@@ -13,11 +13,13 @@ interface CardVersionProps {
 }
 
 export default function CardVersion({ print, isSelected, onSelect, cardName, gameType = 'paper' }: CardVersionProps) {
-  const [imageError, setImageError] = useState(false);
-  const [imageLoading, setImageLoading] = useState(true);
+  // Use refs to track image loading state that persists across re-renders
+  const imageLoadingRef = useRef(true);
+  const imageErrorRef = useRef(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
 
-  // Extract image URL from image_uris or use image_url if available
-  const getImageUrl = () => {
+  // Memoize the image URL to prevent unnecessary recalculations
+  const imageUrl = useMemo(() => {
     if (print.image_url) {
       return print.image_url;
     }
@@ -31,31 +33,34 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
     }
     
     return null;
-  };
+  }, [print.image_url, print.image_uris]);
 
   // Magic card back image as fallback (local file)
-  const getFallbackImageUrl = () => {
-    return '/magic-card-back.jpg';
-  };
+  const fallbackImageUrl = '/magic-card-back.jpg';
 
-  const imageUrl = getImageUrl();
-  const fallbackImageUrl = getFallbackImageUrl();
+  // Reset loading state when image URL changes
+  useMemo(() => {
+    imageLoadingRef.current = true;
+    imageErrorRef.current = false;
+  }, [imageUrl]);
 
-  const handleImageLoad = () => {
-    setImageLoading(false);
-  };
+  const handleImageLoad = useCallback(() => {
+    imageLoadingRef.current = false;
+    setForceUpdate(prev => prev + 1);
+  }, []);
 
-  const handleImageError = () => {
-    setImageError(true);
-    setImageLoading(false);
-  };
+  const handleImageError = useCallback(() => {
+    imageErrorRef.current = true;
+    imageLoadingRef.current = false;
+    setForceUpdate(prev => prev + 1);
+  }, []);
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     onSelect(print.scryfall_id);
-  };
+  }, [onSelect, print.scryfall_id]);
 
   // Format price based on game type
-  const formatPrice = () => {
+  const priceDisplay = useMemo(() => {
     if (gameType === 'arena') {
       return null; // No prices for Arena
     }
@@ -90,22 +95,20 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
 
     const currency = gameType === 'mtgo' ? 'Tix' : 'USD';
     return `${currency} ${priceValue.toFixed(2)}`;
-  };
-
-  const priceDisplay = formatPrice();
+  }, [print.prices, gameType]);
 
   return (
     <div 
       data-testid="card-version"
-      className={`relative cursor-pointer rounded-lg border-2 transition-all duration-200 hover:scale-105 ${
+      className={`card-version transition-all hover-scale ${
         isSelected 
-          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-          : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+          ? 'card-version-selected' 
+          : 'card-version-unselected'
       }`}
       onClick={handleClick}
     >
       {/* Card Image */}
-      <div className="relative aspect-[745/1040] w-full overflow-hidden rounded-t-lg bg-gray-200 dark:bg-gray-700">
+      <div className="card-image-container">
         {/* Always show fallback image as background */}
         <Image
           src={fallbackImageUrl}
@@ -115,13 +118,13 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
         />
         
         {/* Show real image when available */}
-        {imageUrl && !imageError && (
+        {imageUrl && !imageErrorRef.current && (
           <Image
             src={imageUrl}
             alt={`${cardName} - ${print.set_name || 'Unknown Set'}`}
             fill
-            className={`object-cover transition-opacity duration-300 ${
-              imageLoading ? 'opacity-0' : 'opacity-100'
+            className={`card-image transition-opacity ${
+              imageLoadingRef.current ? 'card-image-loading' : 'card-image-loaded'
             }`}
             onLoad={handleImageLoad}
             onError={handleImageError}
@@ -130,32 +133,32 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
         )}
         
         {/* Show spinner during loading */}
-        {imageUrl && imageLoading && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div data-testid="loading-spinner" className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+        {imageUrl && imageLoadingRef.current && (
+          <div className="absolute inset-0 flex-center">
+            <div data-testid="loading-spinner" className="loading-spinner"></div>
           </div>
         )}
       </div>
 
       {/* Card Info */}
-      <div className="p-3">
-        <div className="text-sm font-medium text-gray-900 dark:text-white">
+      <div className="card-info">
+        <div className="card-set-name">
           {print.set_name || 'Unknown Set'}
         </div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="card-number">
           #{print.collector_number || 'N/A'}
         </div>
         {priceDisplay && (
-          <div className="mt-1 text-sm font-semibold text-green-600 dark:text-green-400">
+          <div className="card-price">
             {priceDisplay}
           </div>
         )}
         
         {/* Selection Indicator */}
         {isSelected && (
-          <div className="absolute top-2 right-2">
-            <div className="rounded-full bg-blue-500 p-1">
-              <svg data-testid="selected-indicator" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+          <div className="selection-indicator">
+            <div className="selection-indicator-bg">
+              <svg data-testid="selected-indicator" className="selection-indicator-icon" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
               </svg>
             </div>

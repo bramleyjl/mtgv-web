@@ -61,40 +61,40 @@ export default function CardList({
   }
 
   return (
-    <section className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-white">
+    <section className="card-list-section">
+      <div className="flex-between mb-medium">
+        <h2 className="section-header">
           Card List
         </h2>
         
         {/* Game Type Selection in the middle */}
-        <div className="flex items-center gap-2">
+        <div className="flex-center gap-small">
           <button
             onClick={() => onGameChange('paper')}
-            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+            className={`btn-game ${
               selectedGame === 'paper'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                ? 'btn-game-active'
+                : 'btn-game-inactive'
             }`}
           >
             Paper
           </button>
           <button
             onClick={() => onGameChange('mtgo')}
-            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+            className={`btn-game ${
               selectedGame === 'mtgo'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                ? 'btn-game-active'
+                : 'btn-game-inactive'
             }`}
           >
             MTGO
           </button>
           <button
             onClick={() => onGameChange('arena')}
-            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+            className={`btn-game ${
               selectedGame === 'arena'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                ? 'btn-game-active'
+                : 'btn-game-inactive'
             }`}
           >
             Arena
@@ -102,52 +102,52 @@ export default function CardList({
         </div>
         
         {/* Default Selection */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400">Default:</span>
+        <div className="flex-center gap-small">
+          <span className="text-body-xs text-body-muted">Default:</span>
           <button
             onClick={() => onDefaultSelectionChange('newest')}
-            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+            className={`btn-default ${
               selectedDefaultSelection === 'newest'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                ? 'btn-default-active'
+                : 'btn-default-inactive'
             }`}
           >
             Newest
           </button>
           <button
             onClick={() => onDefaultSelectionChange('oldest')}
-            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+            className={`btn-default ${
               selectedDefaultSelection === 'oldest'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                ? 'btn-default-active'
+                : 'btn-default-inactive'
             }`}
           >
             Oldest
           </button>
           <button
             onClick={() => onDefaultSelectionChange('least_expensive')}
-            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+            className={`btn-default ${
               selectedDefaultSelection === 'least_expensive'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                ? 'btn-default-active'
+                : 'btn-default-inactive'
             }`}
           >
             Least Exp
           </button>
           <button
             onClick={() => onDefaultSelectionChange('most_expensive')}
-            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+            className={`btn-default ${
               selectedDefaultSelection === 'most_expensive'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                ? 'btn-default-active'
+                : 'btn-default-inactive'
             }`}
           >
             Most Exp
           </button>
         </div>
         
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-green-400">
+        <div className="flex-center gap-small">
+          <span className="text-success text-body-small font-medium">
             {cards.length}/100 cards
           </span>
         </div>
@@ -161,12 +161,12 @@ export default function CardList({
       />
 
       {/* Action Buttons */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
+      <div className="flex-between mb-medium">
+        <div className="flex-center gap-small">
           <button
             onClick={onCreatePackage}
             disabled={cards.length === 0 || loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed font-medium"
+            className="btn-primary"
           >
             {loading ? 'Creating Package...' : 'Create Package'}
           </button>
@@ -175,7 +175,7 @@ export default function CardList({
           {cardPackage && (
         <button
               onClick={onClearPackage}
-              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-medium"
+              className="btn-secondary"
             >
               Clear Package
             </button>
@@ -186,13 +186,13 @@ export default function CardList({
       </div>
 
       {/* Card List */}
-      <div className="space-y-2">
+      <div className="gap-small">
         {cards.map((card, index) => (
           <div
             key={`${card.name}-${index}`}
-            className="flex justify-between items-center py-3 px-4 bg-gray-700 rounded-md hover:bg-gray-600 transition-colors border border-gray-600"
+            className="card-list-item"
           >
-            <div className="flex items-center gap-4 flex-1 min-w-0">
+            <div className="card-list-content">
               <EditableCardName
                 cardName={card.name}
                 onUpdate={(newName) => onCardNameUpdate(index, newName)}
@@ -200,13 +200,13 @@ export default function CardList({
               />
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="card-list-controls">
               {/* Quantity Controls */}
-              <div className="flex items-center border border-gray-500 rounded-md bg-gray-600">
+              <div className="quantity-controls">
                 <button
                   onClick={() => onDecreaseQuantity(index)}
                   disabled={card.quantity <= 1}
-                  className="px-2 py-1 text-gray-300 hover:text-white disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="btn-quantity"
                   aria-label="Decrease quantity"
                 >
                   -
@@ -219,13 +219,13 @@ export default function CardList({
                   onBlur={(e) => onQuantityBlur(index, e.target.value)}
                   min="1"
                   max={getMaxQuantityForCard(index)}
-                  className="w-10 text-center border-none focus:outline-none focus:ring-0 text-sm bg-gray-600 text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="input-field"
                 />
                 
                 <button
                   onClick={() => onIncreaseQuantity(index)}
                   disabled={card.quantity >= getMaxQuantityForCard(index)}
-                  className="px-2 py-1 text-gray-300 hover:text-white disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="btn-quantity"
                   aria-label="Increase quantity"
                 >
                   +
@@ -235,7 +235,7 @@ export default function CardList({
               {/* Remove Button */}
               <button
                 onClick={() => onRemoveCard(index)}
-                className="px-2 py-1 text-red-400 hover:text-red-300 focus:outline-none focus:ring-1 focus:ring-red-500 rounded"
+                className="btn-remove"
                 aria-label="Remove card"
               >
                 ×

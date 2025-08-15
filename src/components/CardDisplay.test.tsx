@@ -349,7 +349,7 @@ describe('CardDisplay', () => {
       render(<CardDisplay {...defaultProps} />);
       
       const container = screen.getByText('Package Results').closest('section');
-      expect(container).toHaveClass('bg-green-900', 'rounded-lg', 'shadow-lg');
+      expect(container).toHaveClass('card-display-section');
     });
 
     it('should have correct card entry styling', () => {
@@ -357,14 +357,14 @@ describe('CardDisplay', () => {
       
       const cardEntry = screen.getByText('2x Lightning Bolt').closest('div');
       const parentDiv = cardEntry?.parentElement;
-      expect(parentDiv).toHaveClass('bg-green-800', 'rounded-lg', 'border');
+      expect(parentDiv).toHaveClass('display-entry');
     });
 
     it('should have responsive grid layout for versions', () => {
       render(<CardDisplay {...defaultProps} />);
       
       const versionGrid = screen.getByText('Select Version:').nextElementSibling;
-      expect(versionGrid).toHaveClass('grid', 'grid-cols-2', 'md:grid-cols-3');
+      expect(versionGrid).toHaveClass('display-version-grid');
     });
   });
 }); 

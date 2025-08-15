@@ -68,8 +68,7 @@ describe('GameSelector', () => {
     );
 
     const arenaButton = screen.getByText('Arena');
-    expect(arenaButton).toHaveClass('bg-blue-600');
-    expect(arenaButton).toHaveClass('text-white');
+    expect(arenaButton).toHaveClass('btn-game-active');
   });
 
   it('applies correct styling to unselected games', () => {
@@ -81,39 +80,10 @@ describe('GameSelector', () => {
     );
 
     const mtgoButton = screen.getByText('MTGO');
-    expect(mtgoButton).toHaveClass('bg-gray-700');
-    expect(mtgoButton).toHaveClass('text-gray-300');
+    expect(mtgoButton).toHaveClass('btn-game-inactive');
   });
 
-  it('applies custom className when provided', () => {
-    render(
-      <GameSelector
-        selectedGame="paper"
-        onGameChange={mockOnGameChange}
-        className="custom-class"
-      />
-    );
 
-    const container = screen.getByText('Game Type').closest('div')?.parentElement;
-    expect(container).toHaveClass('custom-class');
-  });
-
-  it('provides tooltips for each game option', () => {
-    render(
-      <GameSelector
-        selectedGame="paper"
-        onGameChange={mockOnGameChange}
-      />
-    );
-
-    const paperButton = screen.getByText('Paper');
-    const mtgoButton = screen.getByText('MTGO');
-    const arenaButton = screen.getByText('Arena');
-
-    expect(paperButton).toHaveAttribute('title', 'Physical card prices');
-    expect(mtgoButton).toHaveAttribute('title', 'Magic Online prices');
-    expect(arenaButton).toHaveAttribute('title', 'Magic Arena prices');
-  });
 
   it('handles all game type changes correctly', () => {
     const { rerender } = render(

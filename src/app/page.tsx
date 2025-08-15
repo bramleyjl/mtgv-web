@@ -97,15 +97,15 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen p-8 bg-gray-900">
-      <div className="max-w-4xl mx-auto">
-        <header className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">MTGV Card Package Builder</h1>
+    <div className="page-container">
+      <div className="content-wrapper">
+        <header className="page-header">
+          <h1 className="page-title">MTGV Card Package Builder</h1>
         </header>
 
-        <main className="space-y-8">
+        <main className="main-content">
           {/* Error Display Section */}
-          <section className="space-y-4">
+          <section className="section-spacing">
             {/* Package API Errors */}
             <ErrorDisplay 
               error={packageError} 
@@ -121,8 +121,8 @@ export default function Home() {
           </section>
 
           {/* Card Input Section */}
-          <section className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700">
-            <h2 className="text-xl font-semibold text-white mb-4">Add Cards</h2>
+          <section className="card-input-section">
+            <h2 className="section-header">Add Cards</h2>
             <CardInput 
               onAddCard={handleAddCard} 
               currentCards={cards}
