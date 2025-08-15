@@ -627,6 +627,8 @@ body {
   @apply grid grid-cols-1 gap-3;
 }
 
+
+
 /* ===== ANIMATION CLASSES ===== */
 
 .transition-all {
