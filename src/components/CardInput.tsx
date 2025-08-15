@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useCardAutocomplete } from '@/hooks/useCardAutocomplete';
 import { validateCardList } from '@/lib/validation';
 
 interface CardInputProps {
   onAddCard: (cardName: string, quantity: number) => void;
   currentCards?: Array<{ name: string; quantity: number }>;
-  validateCardList?: (cards: Array<{ name: string; quantity: number }>) => { isValid: boolean; error?: string; totalCards?: number };
+  validateCardList?: (cards: Array<{ name: string; quantity: number }>) => { isValid: boolean; error?: string; entryCount?: number };
 }
 
 export default function CardInput({ onAddCard, currentCards = [], validateCardList }: CardInputProps) {
@@ -16,29 +16,30 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isSelectingSuggestion, setIsSelectingSuggestion] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  const { suggestions, isLoading, error, searchCards } = useCardAutocomplete();
+  const { suggestions, isLoading, error, searchCards, clearSuggestions } = useCardAutocomplete();
 
   // Check if adding this card would exceed the limit
-  const wouldExceedLimit = (quantity: number): boolean => {
+  const wouldExceedLimit = useCallback((quantity: number): boolean => {
     if (!validateCardList) return false;
     
     const testCards = [...currentCards, { name: cardName.trim(), quantity }];
     const validation = validateCardList(testCards);
     return !validation.isValid;
-  };
+  }, [currentCards, cardName, validateCardList]);
 
   // Get the maximum quantity that can be set for this card without exceeding the limit
-  const getMaxQuantityForCard = (): number => {
+  const getMaxQuantityForCard = useCallback((): number => {
     if (!validateCardList) return 100;
     
     const otherCardsTotal = currentCards.reduce((sum, card) => sum + (card.quantity || 1), 0);
     const remainingSlots = 100 - otherCardsTotal;
     return Math.max(1, Math.min(100, remainingSlots));
-  };
+  }, [currentCards, validateCardList]);
 
   const handleIncreaseQuantity = () => {
     const maxQuantity = getMaxQuantityForCard();
@@ -124,11 +125,21 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
   };
 
   const handleSuggestionSelect = (suggestion: { name: string; id: string }) => {
+    setIsSelectingSuggestion(true);
     setCardName(suggestion.name);
     setShowSuggestions(false);
     setSelectedIndex(0);
     setValidationError(null);
+    
+    // Clear suggestions to ensure dropdown closes immediately
+    clearSuggestions();
+    
     inputRef.current?.focus();
+    
+    // Reset the flag after a short delay
+    setTimeout(() => {
+      setIsSelectingSuggestion(false);
+    }, 200);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -236,7 +247,11 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
               value={cardName}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              onFocus={() => setShowSuggestions(true)}
+              onFocus={() => {
+                if (!isSelectingSuggestion) {
+                  setShowSuggestions(true);
+                }
+              }}
               placeholder="Enter card name..."
               className={`input-field-large ${
                 validationError ? 'border-red-500' : 'border-gray-600'

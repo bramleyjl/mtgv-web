@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import CardVersion from './CardVersion';
 import ExportButtons from './ExportButtons';
 import { CardPackage } from '@/types';
+import { preloadCardImages, imageCache } from '@/lib/imageCache';
 
 interface CardDisplayProps {
   cardPackage: CardPackage | null;
@@ -16,6 +17,27 @@ export default function CardDisplay({
   onVersionSelection, 
   onClearPackage 
 }: CardDisplayProps) {
+  // Preload all card images when package is loaded
+  useEffect(() => {
+    if (cardPackage?.package_entries) {
+      const allPrints = cardPackage.package_entries
+        .filter(entry => entry.card_prints)
+        .flatMap(entry => entry.card_prints || []);
+      
+      if (allPrints.length > 0) {
+        // Only preload images that aren't already cached
+        const uncachedPrints = allPrints.filter(print => {
+          const imageUrl = print.image_url || print.image_uris?.[0]?.normal;
+          return imageUrl && !imageCache.has(imageUrl);
+        });
+        
+        if (uncachedPrints.length > 0) {
+          preloadCardImages(uncachedPrints, 'medium');
+        }
+      }
+    }
+  }, [cardPackage?.package_entries]);
+
   if (!cardPackage) {
     return null;
   }

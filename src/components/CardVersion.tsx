@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useMemo, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { CardPrint } from '@/types';
+import { imageCache, getImagePriority } from '@/lib/imageCache';
 
 interface CardVersionProps {
   print: CardPrint;
@@ -16,7 +17,7 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
   // Use refs to track image loading state that persists across re-renders
   const imageLoadingRef = useRef(true);
   const imageErrorRef = useRef(false);
-  const [forceUpdate, setForceUpdate] = useState(0);
+
 
   // Memoize the image URL to prevent unnecessary recalculations
   const imageUrl = useMemo(() => {
@@ -42,18 +43,32 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
   useMemo(() => {
     imageLoadingRef.current = true;
     imageErrorRef.current = false;
-  }, [imageUrl]);
+  }, []);
+
+  // Cache the image when it's available (only if not already cached)
+  useEffect(() => {
+    if (imageUrl && !imageCache.has(imageUrl)) {
+      const priority = getImagePriority(true, isSelected, true); // Assume visible and in viewport
+      imageCache.set(imageUrl, priority);
+    }
+  }, [imageUrl, isSelected]);
 
   const handleImageLoad = useCallback(() => {
     imageLoadingRef.current = false;
-    setForceUpdate(prev => prev + 1);
   }, []);
 
   const handleImageError = useCallback(() => {
     imageErrorRef.current = true;
     imageLoadingRef.current = false;
-    setForceUpdate(prev => prev + 1);
   }, []);
+
+  // Preload image when component mounts (only if not already cached)
+  useEffect(() => {
+    if (imageUrl && !imageCache.has(imageUrl)) {
+      const priority = getImagePriority(true, isSelected, true);
+      imageCache.preload(imageUrl, priority);
+    }
+  }, [imageUrl, isSelected]);
 
   const handleClick = useCallback(() => {
     onSelect(print.scryfall_id);
@@ -114,6 +129,8 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
           src={fallbackImageUrl}
           alt="Magic card back"
           fill
+          priority
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover"
         />
         
