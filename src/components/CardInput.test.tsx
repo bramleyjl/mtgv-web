@@ -4,6 +4,10 @@ import '@testing-library/jest-dom';
 import CardInput from './CardInput';
 import { validateCardList } from '../lib/validation';
 
+// Mock fetch globally
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
+
 describe('CardInput', () => {
   const mockOnAddCard = jest.fn();
 
@@ -140,11 +144,12 @@ describe('CardInput', () => {
     });
   });
 
-  it('prevents adding card that would exceed 100-card limit', () => {
-    const currentCards = [
-      { name: 'Lightning Bolt', quantity: 50 },
-      { name: 'Black Lotus', quantity: 51 }
-    ];
+  it('prevents adding card that would exceed 100-entry limit', async () => {
+    // Create 100 card entries to reach the limit
+    const currentCards = Array.from({ length: 100 }, (_, i) => ({
+      name: `Card ${i + 1}`,
+      quantity: 1
+    }));
     
     render(
       <CardInput 
@@ -161,8 +166,13 @@ describe('CardInput', () => {
     fireEvent.change(cardNameInput, { target: { value: 'Test Card' } });
     fireEvent.change(quantityInput, { target: { value: '1' } });
     
+    // Submit the form to trigger validation
+    fireEvent.click(submitButton);
+    
     // Should show validation error
-    expect(screen.getByText(/would exceed 100-card limit/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Card list has 101 entries, which exceeds the limit of 100 entries/i)).toBeInTheDocument();
+    });
     expect(submitButton).toBeDisabled();
   });
 

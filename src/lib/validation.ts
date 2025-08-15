@@ -30,26 +30,25 @@ export function validateCardName(cardName: string): { isValid: boolean; error?: 
 }
 
 /**
- * Validates the total card count for the 100-card limit
+ * Validates the card list for the 100-entry limit
  * @param cards - Array of cards with quantities
  * @returns Validation result with error message if invalid
  */
-export function validateCardList(cards: Array<{ name: string; quantity: number }>): { isValid: boolean; error?: string; totalCards?: number } {
+export function validateCardList(cards: Array<{ name: string; quantity: number }>): { isValid: boolean; error?: string; entryCount?: number } {
   if (!cards || cards.length === 0) {
-    return { isValid: true, totalCards: 0 };
+    return { isValid: true, entryCount: 0 };
   }
   
-  const totalCards = cards.reduce((sum, card) => sum + (card.quantity || 1), 0);
-  
-  if (totalCards > 100) {
+  // Check array length limit (100 entries max)
+  if (cards.length > 100) {
     return { 
       isValid: false, 
-      error: `Total cards (${totalCards}) exceeds the limit of 100 cards`,
-      totalCards 
+      error: `Card list has ${cards.length} entries, which exceeds the limit of 100 entries`,
+      entryCount: cards.length
     };
   }
   
-  return { isValid: true, totalCards };
+  return { isValid: true, entryCount: cards.length };
 }
 
 /**

@@ -109,9 +109,13 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
 
     // Check if adding this card would exceed the limit
     if (wouldExceedLimit(quantity)) {
-      const otherCardsTotal = currentCards.reduce((sum, card) => sum + (card.quantity || 1), 0);
-      const remainingSlots = 100 - otherCardsTotal;
-      setValidationError(`Cannot add card: would exceed 100-card limit (${remainingSlots} slots remaining)`);
+      if (validateCardList) {
+        const testCards = [...currentCards, { name: name.trim(), quantity }];
+        const validation = validateCardList(testCards);
+        setValidationError(validation.error || 'Cannot add card: would exceed 100-entry limit');
+      } else {
+        setValidationError('Cannot add card: would exceed 100-entry limit');
+      }
       return false;
     }
 
@@ -199,6 +203,21 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
       setSelectedIndex(0);
     }
   };
+
+  // Check if adding this card would exceed the limit and update validation error
+  React.useEffect(() => {
+    if (cardName.trim() && wouldExceedLimit(quantity)) {
+      if (validateCardList) {
+        const testCards = [...currentCards, { name: cardName.trim(), quantity }];
+        const validation = validateCardList(testCards);
+        setValidationError(validation.error || 'Cannot add card: would exceed 100-entry limit');
+      } else {
+        setValidationError('Cannot add card: would exceed 100-entry limit');
+      }
+    } else if (validationError && validationError.includes('100-entry limit')) {
+      setValidationError(null);
+    }
+  }, [cardName, quantity, currentCards, validateCardList, validationError]);
 
   const isSubmitDisabled = !cardName.trim() || !!validationError || wouldExceedLimit(quantity);
 
