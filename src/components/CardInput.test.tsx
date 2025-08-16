@@ -171,7 +171,7 @@ describe('CardInput', () => {
     
     // Should show validation error
     await waitFor(() => {
-      expect(screen.getByText(/Card list has 101 entries, which exceeds the limit of 100 entries/i)).toBeInTheDocument();
+      expect(screen.getByText('Cannot add card: would exceed 100-entry limit')).toBeInTheDocument();
     });
     expect(submitButton).toBeDisabled();
   });

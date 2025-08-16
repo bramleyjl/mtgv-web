@@ -8,6 +8,7 @@ import { validateCardList } from "@/lib/validation";
 import { GameType, DefaultSelection, Card } from "@/types";
 import { useCardPackage } from "@/hooks/useCardPackage";
 
+
 export default function Home() {
   const [cards, setCards] = useState<Array<{ name: string; quantity: number }>>([]);
   const [validationError, setValidationError] = useState<string | null>(null);

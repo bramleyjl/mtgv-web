@@ -6,10 +6,9 @@ import { useCardAutocomplete } from '@/hooks/useCardAutocomplete';
 interface EditableCardNameProps {
   cardName: string;
   onUpdate: (newName: string) => void;
-  onCancel: () => void;
 }
 
-export default function EditableCardName({ cardName, onUpdate, onCancel }: EditableCardNameProps) {
+export default function EditableCardName({ cardName, onUpdate }: EditableCardNameProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(cardName);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -105,13 +104,7 @@ export default function EditableCardName({ cardName, onUpdate, onCancel }: Edita
     setShowSuggestions(false);
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditValue(cardName);
-    setValidationError(null);
-    setShowSuggestions(false);
-    onCancel();
-  };
+
 
   // Auto-scroll to selected suggestion
   useEffect(() => {
