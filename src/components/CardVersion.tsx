@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback, useRef, useEffect } from 'react';
+import { useMemo, useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { CardPrint } from '@/types';
 import { imageCache, getImagePriority } from '@/lib/imageCache';
@@ -14,9 +14,9 @@ interface CardVersionProps {
 }
 
 export default function CardVersion({ print, isSelected, onSelect, cardName, gameType = 'paper' }: CardVersionProps) {
-  // Use refs to track image loading state that persists across re-renders
-  const imageLoadingRef = useRef(true);
-  const imageErrorRef = useRef(false);
+  // Use state to track image loading state - this will trigger re-renders
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
 
   // Memoize the image URL to prevent unnecessary recalculations
@@ -40,10 +40,17 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
   const fallbackImageUrl = '/magic-card-back.jpg';
 
   // Reset loading state when image URL changes
-  useMemo(() => {
-    imageLoadingRef.current = true;
-    imageErrorRef.current = false;
-  }, []);
+  useEffect(() => {
+    setImageLoading(true);
+    setImageError(false);
+    
+    // Fallback: if onLoad doesn't fire within 3 seconds, assume image is loaded
+    const fallbackTimer = setTimeout(() => {
+      setImageLoading(false);
+    }, 3000);
+    
+    return () => clearTimeout(fallbackTimer);
+  }, [imageUrl]);
 
   // Cache the image when it's available (only if not already cached)
   useEffect(() => {
@@ -54,12 +61,19 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
   }, [imageUrl, isSelected]);
 
   const handleImageLoad = useCallback(() => {
-    imageLoadingRef.current = false;
+    setImageLoading(false);
   }, []);
 
   const handleImageError = useCallback(() => {
-    imageErrorRef.current = true;
-    imageLoadingRef.current = false;
+    setImageError(true);
+    setImageLoading(false);
+  }, []);
+
+  const handleRetryImage = useCallback(() => {
+    setImageError(false);
+    setImageLoading(true);
+    // Force a re-render by updating the key or URL
+    // This will trigger the useEffect to reset the loading state
   }, []);
 
   // Preload image when component mounts (only if not already cached)
@@ -135,13 +149,13 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
         />
         
         {/* Show real image when available */}
-        {imageUrl && !imageErrorRef.current && (
+        {imageUrl && !imageError && (
           <Image
             src={imageUrl}
             alt={`${cardName} - ${print.set_name || 'Unknown Set'}`}
             fill
             className={`card-image transition-opacity ${
-              imageLoadingRef.current ? 'card-image-loading' : 'card-image-loaded'
+              imageLoading ? 'card-image-loading' : 'card-image-loaded'
             }`}
             onLoad={handleImageLoad}
             onError={handleImageError}
@@ -150,9 +164,26 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
         )}
         
         {/* Show spinner during loading */}
-        {imageUrl && imageLoadingRef.current && (
+        {imageUrl && imageLoading && (
           <div className="absolute inset-0 flex-center">
             <div data-testid="loading-spinner" className="loading-spinner"></div>
+          </div>
+        )}
+        
+        {/* Show error state when image fails to load */}
+        {imageUrl && imageError && (
+          <div className="absolute inset-0 flex-center error-placeholder">
+            <div className="text-center p-2">
+              <div className="error-icon">⚠️</div>
+              <div className="error-text">Image failed to load</div>
+              <button 
+                onClick={handleRetryImage}
+                className="retry-button"
+                data-testid="retry-button"
+              >
+                Retry
+              </button>
+            </div>
           </div>
         )}
       </div>

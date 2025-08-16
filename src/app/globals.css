@@ -650,3 +650,21 @@ body {
 .loading-spinner {
   @apply h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent;
 }
+
+/* ===== ERROR STATE CLASSES ===== */
+
+.error-placeholder {
+  @apply bg-gray-100 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600;
+}
+
+.error-icon {
+  @apply text-red-500 text-2xl mb-1;
+}
+
+.error-text {
+  @apply text-xs text-gray-600 dark:text-gray-400;
+}
+
+.retry-button {
+  @apply mt-2 px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors;
+}

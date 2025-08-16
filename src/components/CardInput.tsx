@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useCardAutocomplete } from '@/hooks/useCardAutocomplete';
-import { validateCardList } from '@/lib/validation';
+
 
 interface CardInputProps {
   onAddCard: (cardName: string, quantity: number) => void;
@@ -218,17 +218,11 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
   // Check if adding this card would exceed the limit and update validation error
   React.useEffect(() => {
     if (cardName.trim() && wouldExceedLimit(quantity)) {
-      if (validateCardList) {
-        const testCards = [...currentCards, { name: cardName.trim(), quantity }];
-        const validation = validateCardList(testCards);
-        setValidationError(validation.error || 'Cannot add card: would exceed 100-entry limit');
-      } else {
-        setValidationError('Cannot add card: would exceed 100-entry limit');
-      }
+      setValidationError('Cannot add card: would exceed 100-entry limit');
     } else if (validationError && validationError.includes('100-entry limit')) {
       setValidationError(null);
     }
-  }, [cardName, quantity, currentCards, validateCardList, validationError]);
+  }, [cardName, quantity, currentCards, validationError, wouldExceedLimit]);
 
   const isSubmitDisabled = !cardName.trim() || !!validationError || wouldExceedLimit(quantity);
 

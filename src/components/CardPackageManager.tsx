@@ -133,9 +133,7 @@ export default function CardPackageManager({
     }
   };
 
-  const handleCardNameCancel = () => {
-    // No-op for cancel in list context
-  };
+
 
   const handleCreatePackage = async () => {
     if (cards.length === 0) return;
@@ -176,7 +174,6 @@ export default function CardPackageManager({
         onQuantityChange={handleQuantityChange}
         onQuantityBlur={handleQuantityBlur}
         onCardNameUpdate={handleCardNameUpdate}
-        onCardNameCancel={handleCardNameCancel}
         onCreatePackage={handleCreatePackage}
         loading={loading}
         error={error}

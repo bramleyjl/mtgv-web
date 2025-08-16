@@ -19,7 +19,6 @@ interface CardListProps {
   onQuantityChange: (index: number, value: string) => void;
   onQuantityBlur: (index: number, value: string) => void;
   onCardNameUpdate: (index: number, newName: string) => void;
-  onCardNameCancel: () => void;
   onCreatePackage: () => void;
   loading: boolean;
   error: string | null;
@@ -39,7 +38,6 @@ export default function CardList({
   onQuantityChange,
   onQuantityBlur,
   onCardNameUpdate,
-  onCardNameCancel,
   onCreatePackage,
     loading, 
     error, 
@@ -196,7 +194,6 @@ export default function CardList({
               <EditableCardName
                 cardName={card.name}
                 onUpdate={(newName) => onCardNameUpdate(index, newName)}
-                onCancel={onCardNameCancel}
               />
             </div>
             

@@ -2,6 +2,8 @@
  * Unit tests for ImageCache service
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { imageCache, getImagePriority, preloadCardImages } from './imageCache';
 
 // Mock Image constructor
@@ -9,6 +11,9 @@ global.Image = class {
   onload: (() => void) | null = null;
   onerror: (() => void) | null = null;
   src: string = '';
+  complete: boolean = false;
+  naturalWidth: number = 0;
+  naturalHeight: number = 0;
   
   constructor() {
     // Simulate immediate load for testing
@@ -255,7 +260,7 @@ describe('ImageCache', () => {
       mockNow.mockReturnValue(1000 + 6 * 60 * 60 * 1000 + 1);
       Date.now = mockNow;
       
-      // Trigger cleanup
+      // Trigger cleanup - access private method for testing
       const deleted = (imageCache as any).cleanup();
       expect(deleted).toBeGreaterThan(0);
       expect(imageCache.has(url)).toBe(false);
@@ -286,7 +291,7 @@ describe('Utility functions', () => {
 
   describe('preloadCardImages', () => {
     it('should extract image URLs from card prints', () => {
-      const cardPrints: Array<{ image_url?: string; image_uris?: any[] }> = [
+      const cardPrints: Array<{ image_url?: string; image_uris?: Array<{ normal?: string }> }> = [
         { image_url: 'https://example.com/card1.jpg' },
         { image_uris: [{ normal: 'https://example.com/card2.jpg' }] },
         { image_uris: [] },
