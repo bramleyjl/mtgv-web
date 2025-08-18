@@ -668,3 +668,221 @@ body {
 .retry-button {
   @apply mt-2 px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors;
 }
+
+/* ===== CARD LIST TABS CLASSES ===== */
+
+.card-list-tabs {
+  @apply mb-4;
+}
+
+.tabs-header {
+  @apply flex border-b border-gray-200 dark:border-gray-600;
+}
+
+.tab-button {
+  @apply flex flex-col items-center px-4 py-3 text-sm font-medium border-b-2 transition-colors flex-1;
+}
+
+.tab-button.tab-active {
+  @apply border-blue-500 text-blue-600 dark:text-blue-400;
+}
+
+.tab-button.tab-inactive {
+  @apply border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600;
+}
+
+.tab-label {
+  @apply font-medium;
+}
+
+.tab-description {
+  @apply text-xs mt-1 opacity-75;
+}
+
+/* ===== FREE TEXT INPUT CLASSES ===== */
+
+.free-text-input {
+  @apply space-y-4;
+}
+
+.input-header {
+  @apply flex justify-between items-center;
+}
+
+.input-title {
+  @apply text-lg font-semibold text-gray-900 dark:text-white;
+}
+
+.input-actions {
+  @apply flex gap-2;
+}
+
+.btn-copy, .btn-clear {
+  @apply px-3 py-2 text-sm rounded transition-colors;
+}
+
+.btn-copy {
+  @apply bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-clear {
+  @apply bg-gray-500 text-white hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.copy-menu {
+  @apply absolute z-50 mt-2 p-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-w-md;
+}
+
+.copy-menu-header {
+  @apply flex justify-between items-center mb-3;
+}
+
+.copy-menu-header h4 {
+  @apply text-lg font-semibold text-gray-900 dark:text-white;
+}
+
+.btn-close {
+  @apply text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl font-bold;
+}
+
+.copy-formats {
+  @apply space-y-3 mb-4;
+}
+
+.copy-format-option {
+  @apply flex items-start gap-3 p-2 rounded border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer;
+}
+
+.copy-format-option input[type="radio"] {
+  @apply mt-1;
+}
+
+.format-info {
+  @apply flex-1;
+}
+
+.format-name {
+  @apply font-medium text-gray-900 dark:text-white;
+}
+
+.format-example {
+  @apply text-sm text-gray-600 dark:text-gray-400 mt-1 font-mono;
+}
+
+.btn-copy-apply {
+  @apply w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors;
+}
+
+.copy-result {
+  @apply p-2 rounded text-sm;
+}
+
+.copy-result.success {
+  @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+}
+
+.copy-result.error {
+  @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+}
+
+.input-area {
+  @apply relative;
+}
+
+.deck-list-textarea {
+  @apply w-full p-3 border border-gray-300 dark:border-gray-600 rounded resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white;
+}
+
+.validation-results {
+  @apply space-y-3;
+}
+
+.validation-errors, .validation-warnings, .validation-success {
+  @apply p-3 rounded border;
+}
+
+.validation-errors {
+  @apply border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900;
+}
+
+.validation-warnings {
+  @apply border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900;
+}
+
+.validation-success {
+  @apply border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900 text-green-800 dark:text-green-200 font-medium;
+}
+
+.validation-errors h4, .validation-warnings h4 {
+  @apply font-semibold mb-2;
+}
+
+.validation-errors h4 {
+  @apply text-red-800 dark:text-red-200;
+}
+
+.validation-warnings h4 {
+  @apply text-yellow-800 dark:text-yellow-200;
+}
+
+.validation-errors ul, .validation-warnings ul {
+  @apply list-disc list-inside space-y-1;
+}
+
+.error-item {
+  @apply text-red-700 dark:text-red-300;
+}
+
+.warning-item {
+  @apply text-yellow-700 dark:text-yellow-300;
+}
+
+.import-actions {
+  @apply flex justify-end;
+}
+
+.btn-import {
+  @apply px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* ===== IMPORT URL INPUT CLASSES ===== */
+
+.import-url-input {
+  @apply space-y-4;
+}
+
+.import-url-content {
+  @apply text-center py-8;
+}
+
+.import-url-title {
+  @apply text-lg font-semibold text-gray-900 dark:text-white mb-2;
+}
+
+.import-url-description {
+  @apply text-gray-600 dark:text-gray-400 mb-6;
+}
+
+.import-url-placeholder {
+  @apply p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600;
+}
+
+.placeholder-icon {
+  @apply text-4xl mb-4;
+}
+
+.import-url-placeholder h4 {
+  @apply text-lg font-semibold text-gray-900 dark:text-white mb-2;
+}
+
+.import-url-placeholder p {
+  @apply text-gray-600 dark:text-gray-400 mb-2;
+}
+
+.supported-sources {
+  @apply list-disc list-inside text-gray-600 dark:text-gray-400 mt-3;
+}
+
+.supported-sources li {
+  @apply mb-1;
+}

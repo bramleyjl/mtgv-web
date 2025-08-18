@@ -339,7 +339,7 @@ export default function CardInput({ onAddCard, currentCards = [], validateCardLi
           disabled={isSubmitDisabled}
           className="btn-primary-large"
         >
-          Add Card Manually
+          Add Card
         </button>
       </form>
     </div>

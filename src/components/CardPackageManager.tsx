@@ -8,6 +8,7 @@ import { GameType, DefaultSelection, Card } from '@/types';
 
 interface CardPackageManagerProps {
   cards: Array<{ name: string; quantity: number }>;
+  onAddCard: (cardName: string, quantity: number) => void;
   onUpdateCard: (index: number, card: { name: string; quantity: number }) => void;
   onRemoveCard: (index: number) => void;
   validateCardList?: (cards: Array<{ name: string; quantity: number }>) => { isValid: boolean; error?: string; totalCards?: number };
@@ -19,6 +20,7 @@ interface CardPackageManagerProps {
 
 export default function CardPackageManager({
   cards,
+  onAddCard,
   onUpdateCard,
   onRemoveCard,
   validateCardList,
@@ -147,6 +149,13 @@ export default function CardPackageManager({
     await createCardPackage(cardList, selectedGame, selectedDefaultSelection);
   };
 
+  const handleCreatePackageFromCards = async (newCards: Array<{ name: string; count: number }>) => {
+    if (newCards.length === 0) return;
+
+    const cardList: Card[] = newCards;
+    await createCardPackage(cardList, selectedGame, selectedDefaultSelection);
+  };
+
   const handleClearPackage = () => {
     clearCardPackage();
   };
@@ -157,11 +166,36 @@ export default function CardPackageManager({
     }
   };
 
+  const handlePasteCards = (newCards: Array<{ name: string; quantity: number }>) => {
+    // Replace the current card list with the pasted cards
+    newCards.forEach((card, index) => {
+      onUpdateCard(index, card);
+    });
+    
+    // Remove any extra cards if the new list is shorter
+    if (newCards.length < cards.length) {
+      for (let i = newCards.length; i < cards.length; i++) {
+        onRemoveCard(i);
+      }
+    }
+    
+    // Send real-time update via WebSocket if package exists
+    if (cardPackage?.package_id) {
+      updateCardList(convertToAPICards(newCards));
+    }
+  };
+
+  const handleAddCard = (cardName: string, quantity: number) => {
+    // Use the passed onAddCard prop to add the card
+    onAddCard(cardName, quantity);
+  };
+
   return (
     <div className="gap-large">
       {/* Card List Section */}
       <CardList 
         cards={cards}
+        onAddCard={handleAddCard}
         onUpdateCard={onUpdateCard}
         onRemoveCard={onRemoveCard}
         validateCardList={validateCardList ?? (() => ({ isValid: true }))}
@@ -174,7 +208,9 @@ export default function CardPackageManager({
         onQuantityChange={handleQuantityChange}
         onQuantityBlur={handleQuantityBlur}
         onCardNameUpdate={handleCardNameUpdate}
+        onPasteCards={handlePasteCards}
         onCreatePackage={handleCreatePackage}
+        onCreatePackageFromCards={handleCreatePackageFromCards}
         loading={loading}
         error={error}
         clearError={clearError}

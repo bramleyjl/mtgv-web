@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import CardInput from "@/components/CardInput";
 import CardPackageManager from "@/components/CardPackageManager";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import { validateCardList } from "@/lib/validation";
@@ -47,6 +46,8 @@ export default function Home() {
       setCards(localCards);
     }
   }, [cardPackage?.card_list]);
+
+
 
   const handleAddCard = (cardName: string, quantity: number) => {
     const newCards = [...cards, { name: cardName, quantity }];
@@ -121,19 +122,10 @@ export default function Home() {
             />
           </section>
 
-          {/* Card Input Section */}
-          <section className="card-input-section">
-            <h2 className="section-header">Add Cards</h2>
-            <CardInput 
-              onAddCard={handleAddCard} 
-              currentCards={cards}
-              validateCardList={validateCardList}
-            />
-          </section>
-
           {/* Card Package Manager Section */}
           <CardPackageManager 
             cards={cards}
+            onAddCard={handleAddCard}
             onUpdateCard={handleUpdateCard}
             onRemoveCard={handleRemoveCard}
             validateCardList={validateCardList}

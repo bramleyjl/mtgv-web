@@ -1,12 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import EditableCardName from './EditableCardName';
 import ErrorDisplay from './ErrorDisplay';
+import CardInput from './CardInput';
+import CardListTabs, { CardListTab } from './CardListTabs';
+import FreeTextInput from './FreeTextInput';
+import ImportUrlInput from './ImportUrlInput';
 import { GameType, DefaultSelection } from '@/types';
 
 interface CardListProps {
   cards: { name: string; quantity: number }[];
+  onAddCard: (cardName: string, quantity: number) => void;
   onUpdateCard: (index: number, card: { name: string; quantity: number }) => void;
   onRemoveCard: (index: number) => void;
   validateCardList: (cards: Array<{ name: string; quantity: number }>) => { isValid: boolean; error?: string; totalCards?: number };
@@ -19,7 +24,9 @@ interface CardListProps {
   onQuantityChange: (index: number, value: string) => void;
   onQuantityBlur: (index: number, value: string) => void;
   onCardNameUpdate: (index: number, newName: string) => void;
+  onPasteCards: (cards: Array<{ name: string; quantity: number }>) => void;
   onCreatePackage: () => void;
+  onCreatePackageFromCards: (cards: Array<{ name: string; count: number }>) => void;
   loading: boolean;
   error: string | null;
   clearError: () => void;
@@ -27,6 +34,7 @@ interface CardListProps {
 
 export default function CardList({ 
   cards, 
+  onAddCard,
   onRemoveCard, 
   validateCardList,
   selectedGame,
@@ -38,11 +46,15 @@ export default function CardList({
   onQuantityChange,
   onQuantityBlur,
   onCardNameUpdate,
+  onPasteCards,
   onCreatePackage,
-    loading, 
-    error, 
-    clearError
+  onCreatePackageFromCards,
+  loading, 
+  error, 
+  clearError
 }: CardListProps) {
+
+  const [activeTab, setActiveTab] = useState<CardListTab>('manual');
 
   // Get the maximum quantity that can be set for a specific card without exceeding the limit
   const getMaxQuantityForCard = (index: number): number => {
@@ -54,17 +66,9 @@ export default function CardList({
     return Math.max(1, Math.min(100, remainingSlots));
   };
 
-  if (cards.length === 0) {
-    return null;
-  }
-
   return (
     <section className="card-list-section">
       <div className="flex-between mb-medium">
-        <h2 className="section-header">
-          Card List
-        </h2>
-        
         {/* Game Type Selection in the middle */}
         <div className="flex-center gap-small">
           <button
@@ -101,7 +105,7 @@ export default function CardList({
         
         {/* Default Selection */}
         <div className="flex-center gap-small">
-          <span className="text-body-xs text-body-muted">Default:</span>
+          <span className="text-body-xs text-body-muted">Sort:</span>
           <button
             onClick={() => onDefaultSelectionChange('newest')}
             className={`btn-default ${
@@ -151,96 +155,113 @@ export default function CardList({
         </div>
       </div>
 
-      {/* Error Display */}
-      <ErrorDisplay 
-        error={error} 
-        onDismiss={clearError}
-        type="error"
+      {/* Tabbed Interface */}
+      <CardListTabs 
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
 
-      {/* Action Buttons */}
-      <div className="flex-between mb-medium">
-        <div className="flex-center gap-small">
-          <button
-            onClick={onCreatePackage}
-            disabled={cards.length === 0 || loading}
-            className="btn-primary"
-          >
-            {loading ? 'Creating Package...' : 'Create Package'}
-          </button>
-          
-          {/*
-          {cardPackage && (
-        <button
-              onClick={onClearPackage}
-              className="btn-secondary"
-            >
-              Clear Package
-            </button>
-          )}
-          */}
-        </div>
-        
-      </div>
+      {/* Tab Content */}
+      {activeTab === 'manual' && (
+        <>
+          {/* Error Display */}
+          <ErrorDisplay 
+            error={error} 
+            onDismiss={clearError}
+            type="error"
+          />
 
-      {/* Card List */}
-      <div className="gap-small">
-        {cards.map((card, index) => (
-          <div
-            key={`${card.name}-${index}`}
-            className="card-list-item"
-          >
-            <div className="card-list-content">
-              <EditableCardName
-                cardName={card.name}
-                onUpdate={(newName) => onCardNameUpdate(index, newName)}
-              />
-            </div>
-            
-            <div className="card-list-controls">
-              {/* Quantity Controls */}
-              <div className="quantity-controls">
-                <button
-                  onClick={() => onDecreaseQuantity(index)}
-                  disabled={card.quantity <= 1}
-                  className="btn-quantity"
-                  aria-label="Decrease quantity"
-                >
-                  -
-                </button>
-                
-                <input
-                  type="number"
-                  value={card.quantity === 0 ? '' : card.quantity}
-                  onChange={(e) => onQuantityChange(index, e.target.value)}
-                  onBlur={(e) => onQuantityBlur(index, e.target.value)}
-                  min="1"
-                  max={getMaxQuantityForCard(index)}
-                  className="input-field"
-                />
-                
-                <button
-                  onClick={() => onIncreaseQuantity(index)}
-                  disabled={card.quantity >= getMaxQuantityForCard(index)}
-                  className="btn-quantity"
-                  aria-label="Increase quantity"
-                >
-                  +
-                </button>
-              </div>
-              
-              {/* Remove Button */}
-              <button
-                onClick={() => onRemoveCard(index)}
-                className="btn-remove"
-                aria-label="Remove card"
-              >
-                ×
-              </button>
-            </div>
+          {/* Card Input Section */}
+          <section className="card-input-section mb-medium">
+            <CardInput 
+              onAddCard={onAddCard} 
+              currentCards={cards}
+              validateCardList={validateCardList}
+            />
+          </section>
+
+          {/* Action Buttons */}
+          <div className="flex-center mb-medium">
+            <button
+              onClick={onCreatePackage}
+              disabled={cards.length === 0 || loading}
+              className="btn-primary"
+            >
+              {loading ? 'Creating Package...' : 'Create Package'}
+            </button>
           </div>
-        ))}
-      </div>
+
+          {/* Card List */}
+          <div className="gap-small">
+            {cards.map((card, index) => (
+              <div
+                key={`${card.name}-${index}`}
+                className="card-list-item"
+              >
+                <div className="card-list-content">
+                  <EditableCardName
+                    cardName={card.name}
+                    onUpdate={(newName) => onCardNameUpdate(index, newName)}
+                  />
+                </div>
+                
+                <div className="card-list-controls">
+                  {/* Quantity Controls */}
+                  <div className="quantity-controls">
+                    <button
+                      onClick={() => onDecreaseQuantity(index)}
+                      disabled={card.quantity <= 1}
+                      className="btn-quantity"
+                      aria-label="Decrease quantity"
+                    >
+                      -
+                    </button>
+                    
+                    <input
+                      type="number"
+                      value={card.quantity === 0 ? '' : card.quantity}
+                      onChange={(e) => onQuantityChange(index, e.target.value)}
+                      onBlur={(e) => onQuantityBlur(index, e.target.value)}
+                      min="1"
+                      max={getMaxQuantityForCard(index)}
+                      className="input-field"
+                    />
+                    
+                    <button
+                      onClick={() => onIncreaseQuantity(index)}
+                      disabled={card.quantity >= getMaxQuantityForCard(index)}
+                      className="btn-quantity"
+                      aria-label="Increase quantity"
+                    >
+                      +
+                    </button>
+                  </div>
+                  
+                  {/* Remove Button */}
+                  <button
+                    onClick={() => onRemoveCard(index)}
+                    className="btn-remove"
+                    aria-label="Remove card"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {activeTab === 'freeText' && (
+        <FreeTextInput 
+          onImportCards={onPasteCards}
+          onCreatePackage={onCreatePackageFromCards}
+        />
+      )}
+
+      {activeTab === 'importUrl' && (
+        <ImportUrlInput />
+      )}
     </section>
   );
 } 
