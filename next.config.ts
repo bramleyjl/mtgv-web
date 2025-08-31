@@ -35,6 +35,17 @@ const nextConfig: NextConfig = {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
   
+  // Webpack configuration to ensure path aliases work in production
+  webpack: (config) => {
+    // Ensure path aliases work in production builds
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').resolve(__dirname, 'src'),
+    };
+    
+    return config;
+  },
+  
   // Headers for security (caching handled per-route)
   async headers() {
     return [
