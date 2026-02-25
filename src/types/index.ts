@@ -122,7 +122,7 @@ export interface WebSocketMessage {
 }
 
 export interface WebSocketPackageUpdate {
-  type: 'card-list-updated' | 'version-selection-updated' | 'joined-package' | 'error';
+  type: 'card-list-updated' | 'version-selection-updated' | 'joined-package' | 'card-added' | 'error';
   data?: unknown;
   packageId?: string;
   error?: string;
@@ -135,10 +135,11 @@ export interface UseCardPackageReturn {
   error: string | null;
   createCardPackage: (cards: Card[], game?: GameType, defaultSelection?: DefaultSelection) => Promise<void>;
   createRandomPackage: (count: number, game?: GameType, defaultSelection?: DefaultSelection) => Promise<void>;
+  addCardToPackage: (cardName: string, quantity?: number, game?: GameType, defaultSelection?: DefaultSelection) => Promise<void>;
   updateCardList: (cards: Card[]) => void;
   updateVersionSelection: (oracleId: string, scryfallId: string) => void;
   joinPackage: (packageId: string) => void;
   leavePackage: () => void;
   clearCardPackage: () => void;
   clearError: () => void;
-} 
+}

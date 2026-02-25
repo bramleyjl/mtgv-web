@@ -52,7 +52,7 @@ describe('useCardAutocomplete', () => {
     });
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/cards/search?query=ab&unique_names_only=true');
+      expect(mockFetch).toHaveBeenCalledWith('/api/cards/search?query=ab&unique_names_only=true', {});
     });
   });
 
@@ -83,7 +83,7 @@ describe('useCardAutocomplete', () => {
     });
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/cards/search?query=lightning&unique_names_only=true');
+      expect(mockFetch).toHaveBeenCalledWith('/api/cards/search?query=lightning&unique_names_only=true', {});
     });
     jest.useRealTimers();
   });
@@ -120,7 +120,7 @@ describe('useCardAutocomplete', () => {
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(mockFetch).toHaveBeenCalledWith('/api/cards/search?query=bolt&unique_names_only=true');
+      expect(mockFetch).toHaveBeenCalledWith('/api/cards/search?query=bolt&unique_names_only=true', {});
     });
     jest.useRealTimers();
   });
@@ -252,4 +252,4 @@ describe('useCardAutocomplete', () => {
       expect(result.current.error).toBe(null);
     });
   });
-}); 
+});

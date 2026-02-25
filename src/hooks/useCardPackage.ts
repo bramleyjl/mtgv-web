@@ -1,25 +1,41 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { mtgvAPI } from '@/lib/api';
+import { mtgvAPI, MTGVAPIError } from '@/lib/api';
 import { websocketService, createDebouncedSender } from '@/lib/websocket';
-import { Card, CardPackage, GameType, DefaultSelection, UseCardPackageReturn, WebSocketPackageUpdate } from '@/types';
+import { Card, CardPackage, PackageEntry, GameType, DefaultSelection, UseCardPackageReturn, WebSocketPackageUpdate } from '@/types';
 
 const PACKAGE_ID_STORAGE_KEY = 'mtgv-current-package-id';
 
 export function useCardPackage(): UseCardPackageReturn {
-  const [cardPackage, setCardPackage] = useState<CardPackage | null>(null);
+  const [cardPackage, setCardPackageRaw] = useState<CardPackage | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPackageId, setCurrentPackageId] = useState<string | null>(null);
 
+  const setCardPackage = useCallback((value: any) => {
+    if (typeof value === 'function') {
+      setCardPackageRaw(value);
+    } else {
+      setCardPackageRaw(value);
+    }
+  }, []);
+
   // Create stable debounced senders
   const debouncedCardListSender = useMemo(() => createDebouncedSender(1000), []);
   const debouncedVersionSelectionSender = useMemo(() => createDebouncedSender(500), []);
-  
+
   // Track the last update to prevent duplicates
-  const lastUpdateRef = useRef<{oracleId: string, scryfallId: string, timestamp: number} | null>(null);
-  
+  const lastUpdateRef = useRef<{ oracleId: string, scryfallId: string, timestamp: number } | null>(null);
+
   // Flag to prevent WebSocket messages from overriding API data during initial load
   const isInitialLoadRef = useRef(true);
+
+  // Ref to always have access to current cardPackage state in WebSocket handler
+  const cardPackageRef = useRef<CardPackage | null>(null);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    cardPackageRef.current = cardPackage;
+  }, [cardPackage]);
 
   // Clear debounced sender state when package changes
   useEffect(() => {
@@ -83,18 +99,18 @@ export function useCardPackage(): UseCardPackageReturn {
       switch (message.type) {
         case 'version-selection-updated':
           const data = message.data as { oracleId: string; scryfallId: string };
-          setCardPackage(prev => {
+          setCardPackage((prev: CardPackage | null) => {
             if (!prev) return null;
-            
+
             // Find the entry that this update is trying to modify
-            const targetEntry = prev.package_entries.find(entry => entry.oracle_id === data.oracleId);
-            
+            const targetEntry = prev.package_entries.find((entry: PackageEntry) => entry.oracle_id === data.oracleId);
+
             // If the update doesn't match our current state, ignore it
             if (targetEntry && targetEntry.selected_print !== data.scryfallId) {
               return prev; // Don't update
             }
             // If it matches or we don't have a current state, apply the update
-            const updatedEntries = prev.package_entries.map(entry => {
+            const updatedEntries = prev.package_entries.map((entry: PackageEntry) => {
               if (entry.oracle_id === data.oracleId) {
                 return { ...entry, selected_print: data.scryfallId };
               }
@@ -102,6 +118,37 @@ export function useCardPackage(): UseCardPackageReturn {
             });
             return { ...prev, package_entries: updatedEntries };
           });
+          break;
+        case 'card-added':
+          // Skip success messages (they don't have data property)
+          if ('success' in message || !message.data) {
+            break;
+          }
+
+          // Update package with newly added card from WebSocket event
+          const cardData = message.data as { cardEntry: any; cardList: Card[] };
+
+          setCardPackage((prev: CardPackage | null) => {
+            // Use the ref value if prev is null (stale closure issue)
+            const current = prev || cardPackageRef.current;
+            if (!current) {
+              return null;
+            }
+            const updated = {
+              ...current,
+              package_entries: [...current.package_entries, cardData.cardEntry],
+              card_list: cardData.cardList
+            };
+            return updated;
+          });
+
+          // Clear the timeout if it exists
+          if ((window as any).__addCardTimeout) {
+            clearTimeout((window as any).__addCardTimeout);
+            (window as any).__addCardTimeout = null;
+          }
+
+          setLoading(false); // Clear loading state after card is added
           break;
         case 'card-list-updated':
           break;
@@ -111,10 +158,21 @@ export function useCardPackage(): UseCardPackageReturn {
           if (message.error === 'Package not found') {
             setCardPackage(null);
             setCurrentPackageId(null);
+
+            // Clear the timeout if it exists
+            if ((window as any).__addCardTimeout) {
+              clearTimeout((window as any).__addCardTimeout);
+              (window as any).__addCardTimeout = null;
+            }
+
             setError('Package no longer exists');
             if (typeof window !== 'undefined') {
               localStorage.removeItem(PACKAGE_ID_STORAGE_KEY);
             }
+          } else if (message.error && currentPackageId) {
+            // Handle other errors (e.g., card not found)
+            setError(message.error);
+            setLoading(false);
           }
           break;
       }
@@ -143,11 +201,8 @@ export function useCardPackage(): UseCardPackageReturn {
   }, [currentPackageId]);
 
   const joinPackage = useCallback((packageId: string) => {
+    // Just set the package ID - the useEffect above will handle sending the WebSocket message
     setCurrentPackageId(packageId);
-    websocketService.send({
-      type: 'join-package',
-      packageId
-    });
   }, []);
 
   const leavePackage = useCallback(() => {
@@ -165,10 +220,10 @@ export function useCardPackage(): UseCardPackageReturn {
 
   const updateCardList = useCallback((cards: Card[]) => {
     if (!currentPackageId) return;
-    
+
     // Update local state immediately for responsive UI
-    setCardPackage(prev => prev ? { ...prev, card_list: cards } : null);
-    
+    setCardPackage((prev: CardPackage | null) => prev ? { ...prev, card_list: cards } : null);
+
     // Debounced WebSocket update
     debouncedCardListSender({
       type: 'update-card-list',
@@ -181,16 +236,16 @@ export function useCardPackage(): UseCardPackageReturn {
     if (!currentPackageId) return;
 
     // Optimistic UI update
-    setCardPackage(prev => {
+    setCardPackage((prev: CardPackage | null) => {
       if (!prev) return null;
-      
-      const updatedEntries = prev.package_entries.map(entry => {
+
+      const updatedEntries = prev.package_entries.map((entry: PackageEntry) => {
         if (entry.oracle_id === oracleId) {
           return { ...entry, selected_print: scryfallId };
         }
         return entry;
       });
-      
+
       return { ...prev, package_entries: updatedEntries };
     });
 
@@ -215,8 +270,8 @@ export function useCardPackage(): UseCardPackageReturn {
   }, [currentPackageId]);
 
   const createCardPackage = async (
-    cards: Card[], 
-    game: GameType = 'paper', 
+    cards: Card[],
+    game: GameType = 'paper',
     defaultSelection: DefaultSelection = 'newest'
   ): Promise<void> => {
     if (cards.length === 0) {
@@ -232,20 +287,32 @@ export function useCardPackage(): UseCardPackageReturn {
     try {
       const result = await mtgvAPI.createCardPackage(cards, game, defaultSelection);
       setCardPackage(result);
-      
+
       if (result.package_id) {
         joinPackage(result.package_id);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create card package');
+      if (err instanceof MTGVAPIError) {
+        if (err.isNetworkError) {
+          setError('Network error: Please check your internet connection and try again.');
+        } else if (err.isTimeoutError) {
+          setError('Request timed out: This might be a large package. Please try again or reduce the number of cards.');
+        } else if (err.isServerError) {
+          setError('Server error: The server is experiencing issues. Please try again later.');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to create card package');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const createRandomPackage = async (
-    count: number, 
-    game: GameType = 'paper', 
+    count: number,
+    game: GameType = 'paper',
     defaultSelection: DefaultSelection = 'newest'
   ): Promise<void> => {
     if (count <= 0) {
@@ -261,13 +328,25 @@ export function useCardPackage(): UseCardPackageReturn {
     try {
       const result = await mtgvAPI.createRandomPackage(count, game, defaultSelection);
       setCardPackage(result);
-      
+
       // Join the package room for real-time updates
       if (result.package_id) {
         joinPackage(result.package_id);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create random package');
+      if (err instanceof MTGVAPIError) {
+        if (err.isNetworkError) {
+          setError('Network error: Please check your internet connection and try again.');
+        } else if (err.isTimeoutError) {
+          setError('Request timed out: Please try again.');
+        } else if (err.isServerError) {
+          setError('Server error: The server is experiencing issues. Please try again later.');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to create random package');
+      }
     } finally {
       setLoading(false);
     }
@@ -287,12 +366,70 @@ export function useCardPackage(): UseCardPackageReturn {
     }
   };
 
+  const addCardToPackage = async (
+    cardName: string,
+    quantity?: number,
+    game?: GameType,
+    defaultSelection?: DefaultSelection
+  ): Promise<void> => {
+    const actualQuantity = quantity ?? 1;
+    const actualGame = game ?? 'paper';
+    const actualDefaultSelection = defaultSelection ?? 'newest';
+
+    if (!cardName.trim()) {
+      setError('Card name cannot be empty');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // If no package exists, create one with this card using REST API
+      if (!currentPackageId) {
+        const card: Card = { name: cardName.trim(), count: actualQuantity };
+        await createCardPackage([card], actualGame, actualDefaultSelection);
+        return;
+      }
+
+      // If package exists, add card via WebSocket
+      websocketService.send({
+        type: 'add-card-to-package',
+        packageId: currentPackageId,
+        data: {
+          cardName: cardName.trim(),
+          count: actualQuantity
+        }
+      });
+
+      // Set a timeout in case the WebSocket response never arrives
+      const timeoutId = setTimeout(() => {
+        setLoading(false);
+        setError('Request timed out. Please try again.');
+      }, 10000); // 10 second timeout
+
+      // Store timeout ID to clear it if we get a response
+      // We'll clear it in the 'card-added' event handler
+      (window as any).__addCardTimeout = timeoutId;
+
+      // Loading state will be cleared when 'card-added' event is received
+    } catch (err) {
+      setLoading(false);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to add card to package');
+      }
+    }
+  };
+
   return {
     cardPackage,
     loading,
     error,
     createCardPackage,
     createRandomPackage,
+    addCardToPackage,
     updateCardList,
     updateVersionSelection,
     joinPackage,
@@ -300,4 +437,4 @@ export function useCardPackage(): UseCardPackageReturn {
     clearCardPackage,
     clearError
   };
-} 
+}

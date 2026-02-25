@@ -49,7 +49,7 @@ class WebSocketService {
       this.ws.onclose = (event) => {
         this.connectionPromise = null;
         this.onConnectionChangeCallback?.(false);
-        
+
         // Only reconnect if we haven't explicitly disconnected
         if (this.shouldReconnect && !event.wasClean && this.reconnectAttempts < this.maxReconnectAttempts) {
           this.reconnectAttempts++;
@@ -125,19 +125,19 @@ export const websocketService = new WebSocketService();
 export function createDebouncedSender(delay: number = 1000): DebouncedSender {
   let timeoutId: NodeJS.Timeout | null = null;
   let lastMessage: string | null = null;
-  
+
   const sender = (message: WebSocketMessage) => {
     const messageStr = JSON.stringify(message);
-    
+
     // If this is the same message as the last one, don't send it again
     if (lastMessage === messageStr) {
       return;
     }
-    
+
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
-    
+
     timeoutId = setTimeout(() => {
       websocketService.send(message);
       timeoutId = null;
@@ -153,6 +153,6 @@ export function createDebouncedSender(delay: number = 1000): DebouncedSender {
     }
     lastMessage = null;
   };
-  
+
   return sender;
-} 
+}

@@ -7,6 +7,7 @@ jest.mock('@/lib/api', () => ({
   mtgvAPI: {
     exportCardPackage: jest.fn(),
   },
+  MTGVAPIError: jest.requireActual('@/lib/api').MTGVAPIError,
 }));
 
 const mockMtgvAPI = mtgvAPI as jest.Mocked<typeof mtgvAPI>;
@@ -115,7 +116,7 @@ describe('useExport', () => {
       };
       mockMtgvAPI.exportCardPackage.mockResolvedValue(mockResponse);
       (navigator.clipboard.writeText as jest.Mock).mockRejectedValue(new Error('Clipboard error'));
-      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => { });
 
       const { result } = renderHook(() => useExport());
 
@@ -217,4 +218,4 @@ describe('useExport', () => {
       expect(result.current.exportLoading).toBe(false);
     });
   });
-}); 
+});

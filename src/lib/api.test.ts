@@ -19,7 +19,8 @@ describe('MTGV API Service', () => {
       const result = await mtgvAPI.searchCards('lightning');
 
       expect(fetch).toHaveBeenCalledWith(
-        '/api/cards/search?query=lightning&unique_names_only=true'
+        '/api/cards/search?query=lightning&unique_names_only=true',
+        {}
       );
       expect(result).toEqual(['Lightning Bolt', 'Counterspell']);
     });
@@ -97,20 +98,14 @@ describe('MTGV API Service', () => {
       const result = await mtgvAPI.createRandomPackage(5, 'paper', 'newest');
 
       expect(fetch).toHaveBeenCalledWith(
-        '/api/card_packages/random?count=5&game=paper&default_selection=newest'
+        '/api/card_packages/random?count=5&game=paper&default_selection=newest',
+        {}
       );
       expect(result).toEqual(mockResponse.card_package);
     });
 
     it('should handle random package errors', async () => {
-      const errorResponse = { error: 'Invalid count parameter' };
-      (fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        status: 400,
-        json: async () => errorResponse,
-      });
-
-      await expect(mtgvAPI.createRandomPackage(-1)).rejects.toThrow('Invalid count parameter');
+      await expect(mtgvAPI.createRandomPackage(-1)).rejects.toThrow('Count must be between 1 and 100');
     });
   });
 
@@ -148,4 +143,4 @@ describe('MTGV API Service', () => {
       await expect(mtgvAPI.exportCardPackage(packageId)).rejects.toThrow('Export failed');
     });
   });
-}); 
+});

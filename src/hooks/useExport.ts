@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { mtgvAPI } from '@/lib/api';
+import { mtgvAPI, MTGVAPIError } from '@/lib/api';
 
 interface UseExportReturn {
   exportLoading: boolean;
@@ -28,7 +28,7 @@ export function useExport(): UseExportReturn {
 
     try {
       const response = await mtgvAPI.exportCardPackage(packageId, 'tcgplayer');
-      
+
       // For TCGPlayer, the response contains a URL that we should open
       if (response.export_text && response.export_text.startsWith('http')) {
         window.open(response.export_text, '_blank');
@@ -37,7 +37,17 @@ export function useExport(): UseExportReturn {
         setExportError('Invalid TCGPlayer export response');
       }
     } catch (error) {
-      setExportError(error instanceof Error ? error.message : 'Failed to export to TCGPlayer');
+      if (error instanceof MTGVAPIError) {
+        if (error.isNetworkError) {
+          setExportError('Network error: Please check your connection and try again.');
+        } else if (error.isTimeoutError) {
+          setExportError('Export timed out: Please try again.');
+        } else {
+          setExportError(error.message);
+        }
+      } else {
+        setExportError(error instanceof Error ? error.message : 'Failed to export to TCGPlayer');
+      }
     } finally {
       setExportLoading(false);
     }
@@ -55,7 +65,7 @@ export function useExport(): UseExportReturn {
 
     try {
       const response = await mtgvAPI.exportCardPackage(packageId, 'text');
-      
+
       // For text export, copy to clipboard
       if (response.export_text) {
         try {
@@ -70,7 +80,17 @@ export function useExport(): UseExportReturn {
         setExportError('No export text received');
       }
     } catch (error) {
-      setExportError(error instanceof Error ? error.message : 'Failed to export as text');
+      if (error instanceof MTGVAPIError) {
+        if (error.isNetworkError) {
+          setExportError('Network error: Please check your connection and try again.');
+        } else if (error.isTimeoutError) {
+          setExportError('Export timed out: Please try again.');
+        } else {
+          setExportError(error.message);
+        }
+      } else {
+        setExportError(error instanceof Error ? error.message : 'Failed to export card list');
+      }
     } finally {
       setExportLoading(false);
     }
@@ -93,4 +113,4 @@ export function useExport(): UseExportReturn {
     clearExportError,
     clearExportSuccess,
   };
-} 
+}
