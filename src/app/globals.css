@@ -44,6 +44,105 @@ body {
   @apply space-y-4;
 }
 
+/* ===== CONTROL PANEL CLASSES ===== */
+
+/* Sticky control panel at the top */
+.control-panel {
+  @apply sticky top-0 z-50 bg-gray-800 border-b border-gray-700 shadow-lg;
+}
+
+.control-panel-content {
+  @apply max-w-7xl mx-auto px-4 py-3 flex items-center gap-6;
+}
+
+.control-panel-title {
+  @apply flex items-center;
+}
+
+.control-panel-title h1 {
+  @apply text-2xl font-bold text-white tracking-tight;
+}
+
+.control-panel-controls {
+  @apply flex items-center gap-4 flex-1;
+}
+
+.control-panel-actions {
+  @apply flex items-center gap-3 ml-auto;
+}
+
+.card-counter {
+  @apply flex items-center gap-2 px-3 py-1.5 bg-gray-700 rounded-md border border-gray-600;
+}
+
+.card-count {
+  @apply text-lg font-bold text-green-400;
+}
+
+.card-count-max {
+  @apply text-yellow-400;
+}
+
+/* ===== DROPDOWN CLASSES ===== */
+
+.dropdown {
+  @apply relative;
+}
+
+.dropdown-button {
+  @apply flex items-center gap-2 px-3 py-1.5 bg-gray-700 text-gray-200 rounded-md border border-gray-600 hover:bg-gray-600 transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.dropdown-label {
+  @apply text-gray-400;
+}
+
+.dropdown-value {
+  @apply text-white;
+}
+
+.dropdown-icon {
+  @apply w-4 h-4 ml-1;
+}
+
+.dropdown-icon-small {
+  @apply w-3 h-3 ml-1;
+}
+
+.dropdown-menu {
+  @apply absolute top-full left-0 mt-1 py-1 bg-gray-700 border border-gray-600 rounded-md shadow-lg z-10 min-w-full;
+}
+
+.dropdown-menu-right {
+  @apply left-auto right-0;
+}
+
+.dropdown-item {
+  @apply w-full px-4 py-2 text-left text-sm text-gray-200 hover:bg-gray-600 transition-colors flex items-center gap-2 whitespace-nowrap;
+}
+
+.dropdown-item-active {
+  @apply bg-gray-600 text-white font-medium;
+}
+
+/* ===== BUTTON ICON CLASSES ===== */
+
+.btn-icon-danger {
+  @apply p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-md transition-colors;
+}
+
+.btn-icon-secondary {
+  @apply p-2 text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded-md transition-colors;
+}
+
+.btn-dropdown-primary {
+  @apply px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center gap-2;
+}
+
+.btn-spinner {
+  @apply animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full;
+}
+
 /* ===== HEADER CLASSES ===== */
 
 .page-header {
@@ -319,8 +418,32 @@ body {
   @apply flex justify-between items-start mb-3;
 }
 
+.display-entry-header-row {
+  @apply flex justify-between items-center mb-3 gap-4;
+}
+
+.display-entry-header-left {
+  @apply flex items-center gap-2 flex-1 min-w-0;
+}
+
+.display-entry-controls {
+  @apply flex items-center gap-2 flex-shrink-0;
+}
+
+.btn-collapse {
+  @apply p-2 bg-green-700 text-green-100 hover:bg-green-600 hover:text-white rounded-md transition-colors flex-shrink-0 shadow-sm;
+}
+
+.display-entry-title-container {
+  @apply flex items-center gap-3 flex-1 min-w-0;
+}
+
 .display-entry-title {
-  @apply font-medium text-green-200 text-lg;
+  @apply font-semibold text-green-100 text-lg bg-green-700/50 px-3 py-1 rounded-md;
+}
+
+.display-entry-set {
+  @apply text-sm text-green-300 italic;
 }
 
 .display-entry-status {
@@ -717,7 +840,8 @@ body {
   @apply flex gap-2;
 }
 
-.btn-copy, .btn-clear {
+.btn-copy,
+.btn-clear {
   @apply px-3 py-2 text-sm rounded transition-colors;
 }
 
@@ -797,7 +921,9 @@ body {
   @apply space-y-3;
 }
 
-.validation-errors, .validation-warnings, .validation-success {
+.validation-errors,
+.validation-warnings,
+.validation-success {
   @apply p-3 rounded border;
 }
 
@@ -813,7 +939,8 @@ body {
   @apply border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900 text-green-800 dark:text-green-200 font-medium;
 }
 
-.validation-errors h4, .validation-warnings h4 {
+.validation-errors h4,
+.validation-warnings h4 {
   @apply font-semibold mb-2;
 }
 
@@ -825,7 +952,8 @@ body {
   @apply text-yellow-800 dark:text-yellow-200;
 }
 
-.validation-errors ul, .validation-warnings ul {
+.validation-errors ul,
+.validation-warnings ul {
   @apply list-disc list-inside space-y-1;
 }
 

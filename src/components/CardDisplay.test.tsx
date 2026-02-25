@@ -14,7 +14,7 @@ jest.mock('./CardVersion', () => {
     gameType: string;
   }) {
     return (
-      <div 
+      <div
         data-testid="card-version"
         data-scryfall-id={print.scryfall_id}
         data-is-selected={isSelected}
@@ -67,7 +67,8 @@ describe('CardDisplay', () => {
   const defaultProps = {
     cardPackage: mockCardPackage,
     onVersionSelection: jest.fn(),
-    onClearPackage: jest.fn()
+    onUpdateQuantity: jest.fn(),
+    onRemoveCard: jest.fn()
   };
 
   beforeEach(() => {
@@ -75,36 +76,31 @@ describe('CardDisplay', () => {
   });
 
   describe('Rendering', () => {
-    it('should render package information correctly', () => {
+    it('should render package entries correctly', () => {
       render(<CardDisplay {...defaultProps} />);
-      
-      expect(screen.getByText('Package Results')).toBeInTheDocument();
-      expect(screen.getByText(/Game Type:/)).toBeInTheDocument();
-      expect(screen.getByText(/Default Selection:/)).toBeInTheDocument();
-      expect(screen.getByText(/Cards in Package:/)).toBeInTheDocument();
-    });
 
-    it('should render card entries with correct information', () => {
-      render(<CardDisplay {...defaultProps} />);
-      
-      expect(screen.getByText('2x Lightning Bolt')).toBeInTheDocument();
+      // Card name is displayed without quantity prefix now
+      expect(screen.getByText('Lightning Bolt')).toBeInTheDocument();
+      // Quantity is in a separate input
+      expect(screen.getByDisplayValue('2')).toBeInTheDocument();
     });
 
     it('should render CardVersion components for each print', () => {
       render(<CardDisplay {...defaultProps} />);
-      
+
       const cardVersions = screen.getAllByTestId('card-version');
       expect(cardVersions).toHaveLength(2);
-      
+
       expect(cardVersions[0]).toHaveAttribute('data-scryfall-id', 'print-1');
       expect(cardVersions[1]).toHaveAttribute('data-scryfall-id', 'print-2');
     });
 
     it('should show selected version information', () => {
       render(<CardDisplay {...defaultProps} />);
-      
+
       expect(screen.getByText(/Selected:/)).toBeInTheDocument();
-      expect(screen.getByText('Magic 2010')).toBeInTheDocument();
+      // Magic 2010 appears in multiple places (card version and selected info)
+      expect(screen.getAllByText('Magic 2010').length).toBeGreaterThan(0);
     });
 
     it('should render single version correctly', () => {
@@ -112,15 +108,14 @@ describe('CardDisplay', () => {
         ...mockPackageEntry,
         card_prints: [mockPackageEntry.card_prints[0]]
       };
-      
+
       const singlePrintPackage: CardPackage = {
         ...mockCardPackage,
         package_entries: [singlePrintEntry]
       };
-      
+
       render(<CardDisplay {...defaultProps} cardPackage={singlePrintPackage} />);
-      
-      expect(screen.getByText('Version:')).toBeInTheDocument();
+
       expect(screen.getByText(/Set:/)).toBeInTheDocument();
       // Check that Magic 2010 appears in the Set section specifically
       const setSection = screen.getByText(/Set:/).closest('div');
@@ -132,16 +127,20 @@ describe('CardDisplay', () => {
         ...mockPackageEntry,
         card_prints: []
       };
-      
+
       const noPrintsPackage: CardPackage = {
         ...mockCardPackage,
         package_entries: [noPrintsEntry]
       };
-      
+
       render(<CardDisplay {...defaultProps} cardPackage={noPrintsPackage} />);
-      
-      expect(screen.getByText('2x Lightning Bolt')).toBeInTheDocument();
-      expect(screen.queryByText('Select Version:')).not.toBeInTheDocument();
+
+      // Card name is displayed
+      expect(screen.getByText('Lightning Bolt')).toBeInTheDocument();
+      // Quantity is shown in input
+      expect(screen.getByDisplayValue('2')).toBeInTheDocument();
+      // No version info shown for cards with no prints
+      expect(screen.queryByText(/Set:/)).not.toBeInTheDocument();
     });
 
     it('should handle cards with single print', () => {
@@ -149,22 +148,25 @@ describe('CardDisplay', () => {
         ...mockPackageEntry,
         card_prints: [mockPackageEntry.card_prints[0]]
       };
-      
+
       const singlePrintPackage: CardPackage = {
         ...mockCardPackage,
         package_entries: [singlePrintEntry]
       };
-      
+
       render(<CardDisplay {...defaultProps} cardPackage={singlePrintPackage} />);
-      
-      expect(screen.getByText('Version:')).toBeInTheDocument();
-      expect(screen.queryByText('Select Version:')).not.toBeInTheDocument();
+
+      // For single print, we show "Set:" label
+      expect(screen.getByText(/Set:/)).toBeInTheDocument();
+      // No version selector needed for single prints (they auto-select)
     });
 
     it('should handle cards with multiple prints', () => {
       render(<CardDisplay {...defaultProps} />);
-      
-      expect(screen.getByText('Select Version:')).toBeInTheDocument();
+
+      // For multiple prints, we show the card versions in a grid
+      const cardVersions = screen.queryAllByTestId('card-version');
+      expect(cardVersions.length).toBeGreaterThan(1);
     });
 
     it('should handle not found cards', () => {
@@ -172,14 +174,14 @@ describe('CardDisplay', () => {
         ...mockPackageEntry,
         not_found: true
       };
-      
+
       const notFoundPackage: CardPackage = {
         ...mockCardPackage,
         package_entries: [notFoundEntry]
       };
-      
+
       render(<CardDisplay {...defaultProps} cardPackage={notFoundPackage} />);
-      
+
       expect(screen.getByText('Not Found')).toBeInTheDocument();
     });
 
@@ -188,49 +190,39 @@ describe('CardDisplay', () => {
         ...mockCardPackage,
         package_entries: []
       };
-      
+
       render(<CardDisplay {...defaultProps} cardPackage={emptyPackage} />);
-      
+
       expect(screen.getByText('No cards found in package')).toBeInTheDocument();
     });
 
     it('should not render when cardPackage is null', () => {
       render(<CardDisplay {...defaultProps} cardPackage={null} />);
-      
+
       expect(screen.queryByText('Package Results')).not.toBeInTheDocument();
     });
   });
 
   describe('User Interactions', () => {
-    it('should call onClearPackage when clear button is clicked', () => {
-      const mockOnClearPackage = jest.fn();
-      render(<CardDisplay {...defaultProps} onClearPackage={mockOnClearPackage} />);
-      
-      const clearButton = screen.getByText('Clear Package');
-      fireEvent.click(clearButton);
-      
-      expect(mockOnClearPackage).toHaveBeenCalled();
-    });
-
     it('should call onVersionSelection when a card version is selected', () => {
       const mockOnVersionSelection = jest.fn();
       render(<CardDisplay {...defaultProps} onVersionSelection={mockOnVersionSelection} />);
-      
+
       const cardVersions = screen.getAllByTestId('card-version');
       fireEvent.click(cardVersions[1]); // Click second version
-      
+
       expect(mockOnVersionSelection).toHaveBeenCalledWith('test-oracle-id', 'print-2');
     });
 
     it('should pass correct props to CardVersion components', () => {
       render(<CardDisplay {...defaultProps} />);
-      
+
       const cardVersions = screen.getAllByTestId('card-version');
-      
+
       expect(cardVersions[0]).toHaveAttribute('data-card-name', 'Lightning Bolt');
       expect(cardVersions[0]).toHaveAttribute('data-game-type', 'paper');
       expect(cardVersions[0]).toHaveAttribute('data-is-selected', 'true');
-      
+
       expect(cardVersions[1]).toHaveAttribute('data-is-selected', 'false');
     });
   });
@@ -238,19 +230,19 @@ describe('CardDisplay', () => {
   describe('Selection State', () => {
     it('should show selected version indicator', () => {
       render(<CardDisplay {...defaultProps} />);
-      
+
       const selectedIndicator = screen.getByTestId('selected-indicator');
       expect(selectedIndicator).toBeInTheDocument();
     });
 
     it('should mark correct version as selected', () => {
       render(<CardDisplay {...defaultProps} />);
-      
+
       const cardVersions = screen.getAllByTestId('card-version');
-      const selectedVersion = cardVersions.find(version => 
+      const selectedVersion = cardVersions.find(version =>
         version.getAttribute('data-is-selected') === 'true'
       );
-      
+
       expect(selectedVersion).toHaveAttribute('data-scryfall-id', 'print-1');
     });
 
@@ -259,14 +251,14 @@ describe('CardDisplay', () => {
         ...mockPackageEntry,
         selected_print: null
       };
-      
+
       const noSelectionPackage: CardPackage = {
         ...mockCardPackage,
         package_entries: [noSelectionEntry]
       };
-      
+
       render(<CardDisplay {...defaultProps} cardPackage={noSelectionPackage} />);
-      
+
       const cardVersions = screen.getAllByTestId('card-version');
       cardVersions.forEach(version => {
         expect(version).toHaveAttribute('data-is-selected', 'false');
@@ -280,16 +272,17 @@ describe('CardDisplay', () => {
         ...mockPackageEntry,
         oracle_id: null
       };
-      
+
       const noOraclePackage: CardPackage = {
         ...mockCardPackage,
         package_entries: [noOracleEntry]
       };
-      
+
       render(<CardDisplay {...defaultProps} cardPackage={noOraclePackage} />);
-      
-      expect(screen.getByText('2x Lightning Bolt')).toBeInTheDocument();
-      expect(screen.queryByText('Select Version:')).not.toBeInTheDocument();
+
+      expect(screen.getByText('Lightning Bolt')).toBeInTheDocument();
+      // No version selection shown when oracle_id is null
+      expect(screen.queryByText(/Set:/)).not.toBeInTheDocument();
     });
 
     it('should handle missing selected_print in single version', () => {
@@ -298,15 +291,14 @@ describe('CardDisplay', () => {
         card_prints: [mockPackageEntry.card_prints[0]],
         selected_print: null
       };
-      
+
       const singlePrintPackage: CardPackage = {
         ...mockCardPackage,
         package_entries: [singlePrintEntry]
       };
-      
+
       render(<CardDisplay {...defaultProps} cardPackage={singlePrintPackage} />);
-      
-      expect(screen.getByText('Version:')).toBeInTheDocument();
+
       expect(screen.getByText(/Set:/)).toBeInTheDocument();
       // Check that Magic 2010 appears in the Set section specifically
       const setSection = screen.getByText(/Set:/).closest('div');
@@ -331,40 +323,43 @@ describe('CardDisplay', () => {
         selected_print: 'print-3',
         user_selected: false
       };
-      
+
       const multiEntryPackage: CardPackage = {
         ...mockCardPackage,
         package_entries: [mockPackageEntry, secondEntry]
       };
-      
+
       render(<CardDisplay {...defaultProps} cardPackage={multiEntryPackage} />);
-      
-      expect(screen.getByText('2x Lightning Bolt')).toBeInTheDocument();
-      expect(screen.getByText('1x Counterspell')).toBeInTheDocument();
+
+      expect(screen.getByText('Lightning Bolt')).toBeInTheDocument();
+      expect(screen.getByText('Counterspell')).toBeInTheDocument();
     });
   });
 
   describe('Styling and Layout', () => {
     it('should have correct container styling', () => {
       render(<CardDisplay {...defaultProps} />);
-      
-      const container = screen.getByText('Package Results').closest('section');
-      expect(container).toHaveClass('card-display-section');
+
+      const container = document.querySelector('.card-display-section');
+      expect(container).toBeInTheDocument();
     });
 
     it('should have correct card entry styling', () => {
       render(<CardDisplay {...defaultProps} />);
-      
-      const cardEntry = screen.getByText('2x Lightning Bolt').closest('div');
-      const parentDiv = cardEntry?.parentElement;
-      expect(parentDiv).toHaveClass('display-entry');
+
+      const displayEntry = document.querySelector('.display-entry');
+      expect(displayEntry).toBeInTheDocument();
+      expect(displayEntry).toHaveClass('display-entry');
     });
 
     it('should have responsive grid layout for versions', () => {
       render(<CardDisplay {...defaultProps} />);
-      
-      const versionGrid = screen.getByText('Select Version:').nextElementSibling;
-      expect(versionGrid).toHaveClass('display-version-grid');
+
+      // Check that version grid exists for cards with multiple prints
+      const versionSection = document.querySelector('.display-version-section');
+      expect(versionSection).toBeInTheDocument();
+      const versionGrid = versionSection?.querySelector('.display-version-grid');
+      expect(versionGrid).toBeInTheDocument();
     });
   });
-}); 
+});

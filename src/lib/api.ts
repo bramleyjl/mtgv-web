@@ -23,13 +23,73 @@ export interface APIErrorResponse {
   validationErrors?: ValidationError[];
 }
 
+export class MTGVAPIError extends Error {
+  constructor(
+    message: string,
+    public status?: number,
+    public details?: unknown,
+    public validationErrors?: ValidationError[],
+    public isNetworkError: boolean = false,
+    public isTimeoutError: boolean = false,
+    public isServerError: boolean = false
+  ) {
+    super(message);
+    this.name = 'MTGVAPIError';
+  }
+}
+
+// Request timeout in milliseconds
+const REQUEST_TIMEOUT = 30000; // 30 seconds
+
+// Helper to create a timeout promise
+function createTimeoutPromise(ms: number): Promise<never> {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Request timeout')), ms);
+  });
+}
+
+// Helper to make fetch with timeout
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeout: number = REQUEST_TIMEOUT): Promise<Response> {
+  try {
+    return await Promise.race([
+      fetch(url, options),
+      createTimeoutPromise(timeout)
+    ]);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Request timeout') {
+      throw new MTGVAPIError(
+        'Request timed out. The server may be processing a large dataset. Please try again.',
+        0,
+        undefined,
+        undefined,
+        false,
+        true,
+        false
+      );
+    }
+    // Network errors
+    if (error instanceof TypeError) {
+      throw new MTGVAPIError(
+        'Network error. Please check your internet connection and try again.',
+        0,
+        error,
+        undefined,
+        true,
+        false,
+        false
+      );
+    }
+    throw error;
+  }
+}
+
 // All requests go through Next.js API routes (e.g., /api/cards/search, /api/cards/package)
 
 class MTGVAPIService {
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
       let errorData: APIErrorResponse;
-      
+
       try {
         errorData = await response.json();
       } catch {
@@ -39,10 +99,18 @@ class MTGVAPIService {
         };
       }
 
-      // Create a more descriptive error message
+      // Create a more descriptive error message based on status code
       let errorMessage = errorData.error || 'Request failed';
-      
-      if (errorData.details) {
+      const isServerError = response.status >= 500;
+
+      // Add context based on status code
+      if (response.status === 429) {
+        errorMessage = 'Too many requests. Please wait a moment and try again.';
+      } else if (response.status === 503) {
+        errorMessage = 'Service temporarily unavailable. Please try again in a few moments.';
+      } else if (response.status === 404) {
+        errorMessage = 'Resource not found. ' + (errorData.details || '');
+      } else if (errorData.details) {
         errorMessage += `: ${errorData.details}`;
       }
 
@@ -54,11 +122,15 @@ class MTGVAPIService {
         errorMessage = `Validation errors: ${validationMessages}`;
       }
 
-      const error = new Error(errorMessage);
-      (error as unknown as { status?: number }).status = response.status;
-      (error as unknown as { details?: unknown }).details = errorData.details;
-      (error as unknown as { validationErrors?: unknown }).validationErrors = errorData.validationErrors;
-      throw error;
+      throw new MTGVAPIError(
+        errorMessage,
+        response.status,
+        errorData.details,
+        errorData.validationErrors,
+        false,
+        false,
+        isServerError
+      );
     }
 
     return response.json();
@@ -70,7 +142,7 @@ class MTGVAPIService {
       query,
       unique_names_only: uniqueNamesOnly.toString(),
     });
-    const res = await fetch(`/api/cards/search?${params.toString()}`);
+    const res = await fetchWithTimeout(`/api/cards/search?${params.toString()}`);
     const data = await this.handleResponse<{ cards: string[] }>(res);
     return data.cards;
   }
@@ -82,6 +154,14 @@ class MTGVAPIService {
     defaultSelection: DefaultSelection = 'newest',
     packageId?: string
   ): Promise<CardPackage> {
+    if (!cardList || cardList.length === 0) {
+      throw new MTGVAPIError('Card list cannot be empty', 400);
+    }
+
+    if (cardList.length > 100) {
+      throw new MTGVAPIError('Card list cannot exceed 100 cards', 400);
+    }
+
     const body: Record<string, unknown> = {
       card_list: cardList,
       game,
@@ -90,12 +170,12 @@ class MTGVAPIService {
     if (packageId) {
       body.package_id = packageId;
     }
-    const res = await fetch('/api/card_packages', {
+    const res = await fetchWithTimeout('/api/card_packages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-    });
-    
+    }, 45000); // Longer timeout for package creation
+
     const data: CreateCardPackageResponse = await this.handleResponse(res);
     return data.card_package;
   }
@@ -106,12 +186,16 @@ class MTGVAPIService {
     game: GameType = 'paper',
     defaultSelection: DefaultSelection = 'newest'
   ): Promise<CardPackage> {
+    if (count <= 0 || count > 100) {
+      throw new MTGVAPIError('Count must be between 1 and 100', 400);
+    }
+
     const params = new URLSearchParams({
       count: count.toString(),
       game,
       default_selection: defaultSelection,
     });
-    const res = await fetch(`/api/card_packages/random?${params.toString()}`);
+    const res = await fetchWithTimeout(`/api/card_packages/random?${params.toString()}`);
     const data: RandomPackageResponse = await this.handleResponse(res);
     return data.card_package;
   }
@@ -121,10 +205,14 @@ class MTGVAPIService {
     packageId: string,
     exportType: ExportType = 'tcgplayer'
   ): Promise<ExportResponse> {
+    if (!packageId) {
+      throw new MTGVAPIError('Package ID is required for export', 400);
+    }
+
     const params = new URLSearchParams({
       type: exportType,
     });
-    const res = await fetch(`/api/card_packages/export?${params.toString()}`, {
+    const res = await fetchWithTimeout(`/api/card_packages/export?${params.toString()}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ package_id: packageId }),
@@ -134,8 +222,12 @@ class MTGVAPIService {
 
   // Fetch card package by ID
   async getCardPackage(packageId: string): Promise<CardPackage> {
+    if (!packageId) {
+      throw new MTGVAPIError('Package ID is required', 400);
+    }
+
     const url = `/api/card_packages/${packageId}`;
-    const res = await fetch(url);
+    const res = await fetchWithTimeout(url);
     const data: CreateCardPackageResponse = await this.handleResponse(res);
     return data.card_package;
   }

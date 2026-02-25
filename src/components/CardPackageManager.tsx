@@ -3,8 +3,7 @@
 import React from 'react';
 import CardList from './CardList';
 import CardDisplay from './CardDisplay';
-import { useCardPackage } from '@/hooks/useCardPackage';
-import { GameType, DefaultSelection, Card } from '@/types';
+import { GameType, DefaultSelection, Card, CardPackage } from '@/types';
 
 interface CardPackageManagerProps {
   cards: Array<{ name: string; quantity: number }>;
@@ -16,6 +15,16 @@ interface CardPackageManagerProps {
   onGameChange: (game: GameType) => void;
   selectedDefaultSelection: DefaultSelection;
   onDefaultSelectionChange: (selection: DefaultSelection) => void;
+  // Card package hook functions passed from parent
+  cardPackage: CardPackage | null;
+  loading: boolean;
+  error: string | null;
+  createCardPackage: (cards: Card[], game: GameType, defaultSelection: DefaultSelection) => Promise<void>;
+  addCardToPackage: (cardName: string, quantity?: number, game?: GameType, defaultSelection?: DefaultSelection) => Promise<void>;
+  clearError: () => void;
+  clearCardPackage: () => void;
+  updateCardList: (cards: Card[]) => void;
+  updateVersionSelection: (oracleId: string, scryfallId: string) => void;
 }
 
 export default function CardPackageManager({
@@ -25,20 +34,16 @@ export default function CardPackageManager({
   onRemoveCard,
   validateCardList,
   selectedGame,
-  onGameChange,
   selectedDefaultSelection,
-  onDefaultSelectionChange
+  // Receive hook functions from parent
+  cardPackage,
+  error,
+  createCardPackage,
+  addCardToPackage,
+  clearError,
+  updateCardList,
+  updateVersionSelection
 }: CardPackageManagerProps) {
-  const { 
-    cardPackage, 
-    loading, 
-    error, 
-    createCardPackage, 
-    clearError, 
-    clearCardPackage,
-    updateCardList,
-    updateVersionSelection
-  } = useCardPackage();
 
   // Convert local card format to API format for WebSocket updates
   const convertToAPICards = (localCards: Array<{ name: string; quantity: number }>): Card[] => {
@@ -48,116 +53,11 @@ export default function CardPackageManager({
     }));
   };
 
-  // Get the maximum quantity that can be set for a specific card without exceeding the limit
-  const getMaxQuantityForCard = (index: number): number => {
-    if (!validateCardList) return 100;
-    
-    const otherCards = cards.filter((_, i) => i !== index);
-    const otherCardsTotal = otherCards.reduce((sum, card) => sum + (card.quantity || 1), 0);
-    const remainingSlots = 100 - otherCardsTotal;
-    return Math.max(1, Math.min(100, remainingSlots));
-  };
-
-  const handleIncreaseQuantity = (index: number) => {
-    const card = cards[index];
-    const maxQuantity = getMaxQuantityForCard(index);
-    if (card.quantity < maxQuantity) {
-      const updatedCard = { ...card, quantity: card.quantity + 1 };
-      onUpdateCard(index, updatedCard);
-      
-      if (cardPackage?.package_id) {
-        const newCards = cards.map((c, i) => i === index ? updatedCard : c);
-        updateCardList(convertToAPICards(newCards));
-      }
-    }
-  };
-
-  const handleDecreaseQuantity = (index: number) => {
-    const card = cards[index];
-    if (card.quantity > 1) {
-      const updatedCard = { ...card, quantity: card.quantity - 1 };
-      onUpdateCard(index, updatedCard);
-      
-      if (cardPackage?.package_id) {
-        const newCards = cards.map((c, i) => i === index ? updatedCard : c);
-        updateCardList(convertToAPICards(newCards));
-      }
-    }
-  };
-
-  const handleQuantityChange = (index: number, value: string) => {
-    const card = cards[index];
-    let updatedCard: { name: string; quantity: number };
-    
-    // Allow empty string for clearing
-    if (value === '') {
-      updatedCard = { ...card, quantity: 0 };
-    } else {
-      const newQuantity = parseInt(value) || 1;
-      const maxQuantity = getMaxQuantityForCard(index);
-      const clampedQuantity = Math.max(1, Math.min(maxQuantity, newQuantity));
-      updatedCard = { ...card, quantity: clampedQuantity };
-    }
-    
-    onUpdateCard(index, updatedCard);
-    
-    // Send real-time update via WebSocket if package exists
-    if (cardPackage?.package_id) {
-      const newCards = cards.map((c, i) => i === index ? updatedCard : c);
-      updateCardList(convertToAPICards(newCards));
-    }
-  };
-
-  const handleQuantityBlur = (index: number, value: string) => {
-    const card = cards[index];
-    // If empty or invalid, default to 1
-    if (value === '' || isNaN(parseInt(value))) {
-      const updatedCard = { ...card, quantity: 1 };
-      onUpdateCard(index, updatedCard);
-      
-      // Send real-time update via WebSocket if package exists
-      if (cardPackage?.package_id) {
-        const newCards = cards.map((c, i) => i === index ? updatedCard : c);
-        updateCardList(convertToAPICards(newCards));
-      }
-    }
-  };
-
-  const handleCardNameUpdate = (index: number, newName: string) => {
-    const card = cards[index];
-    const updatedCard = { ...card, name: newName };
-    onUpdateCard(index, updatedCard);
-    
-    // Send real-time update via WebSocket if package exists
-    if (cardPackage?.package_id) {
-      const newCards = cards.map((c, i) => i === index ? updatedCard : c);
-      updateCardList(convertToAPICards(newCards));
-    }
-  };
-
-
-
-  const handleCreatePackage = async () => {
-    if (cards.length === 0) return;
-    
-    // Convert cards to the format expected by the API
-    const cardList: Card[] = cards.map(card => ({
-      name: card.name,
-      count: card.quantity
-    }));
-    
-    await createCardPackage(cardList, selectedGame, selectedDefaultSelection);
-  };
-
   const handleCreatePackageFromCards = async (newCards: Array<{ name: string; count: number }>) => {
     if (newCards.length === 0) return;
 
     const cardList: Card[] = newCards;
     await createCardPackage(cardList, selectedGame, selectedDefaultSelection);
-  };
-
-  const handleClearPackage = () => {
-    clearCardPackage();
   };
 
   const handleVersionSelection = (oracleId: string, scryfallId: string) => {
@@ -166,19 +66,39 @@ export default function CardPackageManager({
     }
   };
 
+  const handleUpdateQuantity = (cardName: string, newQuantity: number) => {
+    if (!cardPackage?.package_id) return;
+
+    // Update the card list via WebSocket
+    const updatedCards = (cardPackage.card_list || []).map(card =>
+      card.name === cardName ? { ...card, count: newQuantity } : card
+    );
+
+    updateCardList(updatedCards);
+  };
+
+  const handleRemoveCardByName = (cardName: string) => {
+    if (!cardPackage?.package_id) return;
+
+    // Remove the card from the list via WebSocket
+    const updatedCards = (cardPackage.card_list || []).filter(card => card.name !== cardName);
+
+    updateCardList(updatedCards);
+  };
+
   const handlePasteCards = (newCards: Array<{ name: string; quantity: number }>) => {
     // Replace the current card list with the pasted cards
     newCards.forEach((card, index) => {
       onUpdateCard(index, card);
     });
-    
+
     // Remove any extra cards if the new list is shorter
     if (newCards.length < cards.length) {
       for (let i = newCards.length; i < cards.length; i++) {
         onRemoveCard(i);
       }
     }
-    
+
     // Send real-time update via WebSocket if package exists
     if (cardPackage?.package_id) {
       updateCardList(convertToAPICards(newCards));
@@ -193,35 +113,26 @@ export default function CardPackageManager({
   return (
     <div className="gap-large">
       {/* Card List Section */}
-      <CardList 
+      <CardList
         cards={cards}
         onAddCard={handleAddCard}
-        onUpdateCard={onUpdateCard}
-        onRemoveCard={onRemoveCard}
+        onAddCardToPackage={addCardToPackage}
         validateCardList={validateCardList ?? (() => ({ isValid: true }))}
         selectedGame={selectedGame}
-        onGameChange={onGameChange}
         selectedDefaultSelection={selectedDefaultSelection}
-        onDefaultSelectionChange={onDefaultSelectionChange}
-        onIncreaseQuantity={handleIncreaseQuantity}
-        onDecreaseQuantity={handleDecreaseQuantity}
-        onQuantityChange={handleQuantityChange}
-        onQuantityBlur={handleQuantityBlur}
-        onCardNameUpdate={handleCardNameUpdate}
         onPasteCards={handlePasteCards}
-        onCreatePackage={handleCreatePackage}
         onCreatePackageFromCards={handleCreatePackageFromCards}
-        loading={loading}
         error={error}
         clearError={clearError}
       />
 
       {/* Card Display Section */}
-      <CardDisplay 
+      <CardDisplay
         cardPackage={cardPackage}
         onVersionSelection={handleVersionSelection}
-        onClearPackage={handleClearPackage}
+        onUpdateQuantity={handleUpdateQuantity}
+        onRemoveCard={handleRemoveCardByName}
       />
     </div>
   );
-} 
+}

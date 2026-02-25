@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
+import ControlPanel from "@/components/ControlPanel";
 import CardPackageManager from "@/components/CardPackageManager";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import { validateCardList } from "@/lib/validation";
@@ -15,11 +16,16 @@ export default function Home() {
   const [selectedDefaultSelection, setSelectedDefaultSelection] = useState<DefaultSelection>('newest');
 
   // Use the card package hook for real-time updates
-  const { 
-    cardPackage, 
-    error: packageError, 
+  const {
+    cardPackage,
+    loading,
+    error: packageError,
+    createCardPackage,
+    addCardToPackage,
     updateCardList,
-    clearError: clearPackageError
+    updateVersionSelection,
+    clearError: clearPackageError,
+    clearCardPackage
   } = useCardPackage();
 
   // Convert local card format to API format
@@ -44,19 +50,22 @@ export default function Home() {
       // Repopulating card list from package
       const localCards = convertToLocalCards(cardPackage.card_list);
       setCards(localCards);
+    } else if (cardPackage === null) {
+      // Package was cleared, reset cards
+      setCards([]);
     }
-  }, [cardPackage?.card_list]);
+  }, [cardPackage]);
 
 
 
   const handleAddCard = (cardName: string, quantity: number) => {
     const newCards = [...cards, { name: cardName, quantity }];
     const validation = validateCardList(newCards);
-    
+
     if (validation.isValid) {
       setCards(newCards);
       setValidationError(null);
-      
+
       // Send real-time update via WebSocket if package exists
       if (cardPackage?.package_id) {
         updateCardList(convertToAPICards(newCards));
@@ -69,11 +78,11 @@ export default function Home() {
   const handleUpdateCard = (index: number, updatedCard: { name: string; quantity: number }) => {
     const newCards = cards.map((card, i) => i === index ? updatedCard : card);
     const validation = validateCardList(newCards);
-    
+
     if (validation.isValid) {
       setCards(newCards);
       setValidationError(null);
-      
+
       // Send real-time update via WebSocket if package exists
       if (cardPackage?.package_id) {
         updateCardList(convertToAPICards(newCards));
@@ -87,7 +96,7 @@ export default function Home() {
     const newCards = cards.filter((_, i) => i !== index);
     setCards(newCards);
     setValidationError(null); // Clear error when removing cards
-    
+
     // Send real-time update via WebSocket if package exists
     if (cardPackage?.package_id) {
       updateCardList(convertToAPICards(newCards));
@@ -100,30 +109,39 @@ export default function Home() {
 
   return (
     <div className="page-container">
-      <div className="content-wrapper">
-        <header className="page-header">
-          <h1 className="page-title">MTGV Card Package Builder</h1>
-        </header>
+      {/* Sticky Control Panel */}
+      <ControlPanel
+        selectedGame={selectedGame}
+        onGameChange={setSelectedGame}
+        selectedDefaultSelection={selectedDefaultSelection}
+        onDefaultSelectionChange={setSelectedDefaultSelection}
+        cardCount={cards.length}
+        maxCards={100}
+        packageId={cardPackage?.package_id}
+        onClearPackage={clearCardPackage}
+        hasPackage={!!cardPackage}
+      />
 
+      <div className="content-wrapper">
         <main className="main-content">
           {/* Error Display Section */}
           <section className="section-spacing">
             {/* Package API Errors */}
-            <ErrorDisplay 
-              error={packageError} 
+            <ErrorDisplay
+              error={packageError}
               onDismiss={clearPackageError}
               type="error"
             />
             {/* Validation Errors */}
-            <ErrorDisplay 
-              error={validationError} 
+            <ErrorDisplay
+              error={validationError}
               onDismiss={clearValidationError}
               type="warning"
             />
           </section>
 
           {/* Card Package Manager Section */}
-          <CardPackageManager 
+          <CardPackageManager
             cards={cards}
             onAddCard={handleAddCard}
             onUpdateCard={handleUpdateCard}
@@ -133,6 +151,15 @@ export default function Home() {
             onGameChange={setSelectedGame}
             selectedDefaultSelection={selectedDefaultSelection}
             onDefaultSelectionChange={setSelectedDefaultSelection}
+            cardPackage={cardPackage}
+            loading={loading}
+            error={packageError}
+            createCardPackage={createCardPackage}
+            addCardToPackage={addCardToPackage}
+            clearError={clearPackageError}
+            clearCardPackage={clearCardPackage}
+            updateCardList={updateCardList}
+            updateVersionSelection={updateVersionSelection}
           />
         </main>
       </div>
