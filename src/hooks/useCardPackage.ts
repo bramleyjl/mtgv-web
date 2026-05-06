@@ -6,18 +6,10 @@ import { Card, CardPackage, PackageEntry, GameType, DefaultSelection, UseCardPac
 const PACKAGE_ID_STORAGE_KEY = 'mtgv-current-package-id';
 
 export function useCardPackage(): UseCardPackageReturn {
-  const [cardPackage, setCardPackageRaw] = useState<CardPackage | null>(null);
+  const [cardPackage, setCardPackage] = useState<CardPackage | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPackageId, setCurrentPackageId] = useState<string | null>(null);
-
-  const setCardPackage = useCallback((value: any) => {
-    if (typeof value === 'function') {
-      setCardPackageRaw(value);
-    } else {
-      setCardPackageRaw(value);
-    }
-  }, []);
 
   // Create stable debounced senders
   const debouncedCardListSender = useMemo(() => createDebouncedSender(1000), []);
@@ -31,6 +23,9 @@ export function useCardPackage(): UseCardPackageReturn {
 
   // Ref to always have access to current cardPackage state in WebSocket handler
   const cardPackageRef = useRef<CardPackage | null>(null);
+
+  // Timeout ref for add-card WebSocket response guard
+  const addCardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -142,10 +137,9 @@ export function useCardPackage(): UseCardPackageReturn {
             return updated;
           });
 
-          // Clear the timeout if it exists
-          if ((window as any).__addCardTimeout) {
-            clearTimeout((window as any).__addCardTimeout);
-            (window as any).__addCardTimeout = null;
+          if (addCardTimeoutRef.current) {
+            clearTimeout(addCardTimeoutRef.current);
+            addCardTimeoutRef.current = null;
           }
 
           setLoading(false); // Clear loading state after card is added
@@ -159,10 +153,9 @@ export function useCardPackage(): UseCardPackageReturn {
             setCardPackage(null);
             setCurrentPackageId(null);
 
-            // Clear the timeout if it exists
-            if ((window as any).__addCardTimeout) {
-              clearTimeout((window as any).__addCardTimeout);
-              (window as any).__addCardTimeout = null;
+            if (addCardTimeoutRef.current) {
+              clearTimeout(addCardTimeoutRef.current);
+              addCardTimeoutRef.current = null;
             }
 
             setError('Package no longer exists');
@@ -410,7 +403,7 @@ export function useCardPackage(): UseCardPackageReturn {
 
       // Store timeout ID to clear it if we get a response
       // We'll clear it in the 'card-added' event handler
-      (window as any).__addCardTimeout = timeoutId;
+      addCardTimeoutRef.current = timeoutId;
 
       // Loading state will be cleared when 'card-added' event is received
     } catch (err) {
