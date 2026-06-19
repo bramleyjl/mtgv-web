@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { 
-  parseDeckList, 
-  generateDeckList, 
-  validateDeckList, 
+import React, { useState, useCallback, useEffect } from 'react';
+import {
+  parseDeckList,
+  generateDeckList,
+  validateDeckList,
   SUPPORTED_FORMATS
 } from '@/lib/deckListParser';
 import { copyToClipboard } from '@/lib/clipboard';
@@ -12,15 +12,28 @@ import { copyToClipboard } from '@/lib/clipboard';
 interface FreeTextInputProps {
   onImportCards: (cards: Array<{ name: string; quantity: number }>) => void;
   onCreatePackage: (cards: Array<{ name: string; count: number }>) => void;
+  cardList?: Array<{ name: string; count: number }> | null;
   className?: string;
 }
 
-export default function FreeTextInput({ 
-  onImportCards, 
+export default function FreeTextInput({
+  onImportCards,
   onCreatePackage,
-  className = '' 
+  cardList,
+  className = ''
 }: FreeTextInputProps) {
   const [inputText, setInputText] = useState('');
+
+  // Populate from persisted package on initial load (e.g. localStorage restore)
+  useEffect(() => {
+    if (cardList && cardList.length > 0 && !inputText) {
+      const text = generateDeckList(cardList.map(c => ({ name: c.name, quantity: c.count })));
+      setInputText(text);
+      const parsed = parseDeckList(text);
+      setValidation(validateDeckList(parsed));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardList]);
   const [validation, setValidation] = useState<{
     isValid: boolean;
     errors: string[];
@@ -68,10 +81,6 @@ export default function FreeTextInput({
     
     // Then create the package directly from the parsed cards
     onCreatePackage(apiCards);
-    
-    // Reset input
-    setInputText('');
-    setValidation(null);
   }, [inputText, validation, onImportCards, onCreatePackage]);
 
   // Copy current card list to clipboard

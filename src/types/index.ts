@@ -46,7 +46,6 @@ export interface PackageEntry {
   card_prints: CardPrint[];
   selected_print: string | null;
   user_selected: boolean;
-  not_found?: boolean;
 }
 
 // API Response types
@@ -92,18 +91,6 @@ export interface APIError {
 export interface CardInputProps {
   onCardListChange: (cards: Card[]) => void;
   cardList: Card[];
-}
-
-export interface CardDisplayProps {
-  cardPackage: CardPackage | null;
-  onVersionSelection: (oracleId: string, scryfallId: string) => void;
-  onClearPackage: () => void;
-}
-
-export interface CardVersionProps {
-  cardPrint: CardPrint;
-  isSelected: boolean;
-  onSelect: (cardPrint: CardPrint) => void;
 }
 
 // Hook return types

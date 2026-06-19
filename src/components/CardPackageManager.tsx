@@ -122,6 +122,7 @@ export default function CardPackageManager({
         selectedDefaultSelection={selectedDefaultSelection}
         onPasteCards={handlePasteCards}
         onCreatePackageFromCards={handleCreatePackageFromCards}
+        packageCardList={cardPackage?.card_list}
         error={error}
         clearError={clearError}
       />

@@ -132,7 +132,7 @@ export default function CardDisplay({
                         <span className="display-entry-set">{selectedSetName}</span>
                       )}
                     </div>
-                    {entry.not_found && (
+                    {!entry.oracle_id && (
                       <span className="display-entry-status">Not Found</span>
                     )}
                   </div>
@@ -177,7 +177,7 @@ export default function CardDisplay({
                 </div>
 
                 {/* Collapsible content */}
-                {!isCollapsed && !entry.not_found && entry.card_prints && entry.oracle_id && (
+                {!isCollapsed && entry.oracle_id && entry.card_prints && (
                   <div className="display-version-section">
                     {/* Selected print */}
                     {selectedPrint && (

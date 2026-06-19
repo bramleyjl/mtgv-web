@@ -6,7 +6,7 @@ import CardInput from './CardInput';
 import CardListTabs, { CardListTab } from './CardListTabs';
 import FreeTextInput from './FreeTextInput';
 import ImportUrlInput from './ImportUrlInput';
-import { GameType, DefaultSelection } from '@/types';
+import { GameType, DefaultSelection, Card } from '@/types';
 
 interface CardListProps {
   cards: { name: string; quantity: number }[];
@@ -17,6 +17,7 @@ interface CardListProps {
   selectedDefaultSelection: DefaultSelection;
   onPasteCards: (cards: Array<{ name: string; quantity: number }>) => void;
   onCreatePackageFromCards: (cards: Array<{ name: string; count: number }>) => void;
+  packageCardList?: Card[] | null;
   error: string | null;
   clearError: () => void;
 }
@@ -30,6 +31,7 @@ export default function CardList({
   selectedDefaultSelection,
   onPasteCards,
   onCreatePackageFromCards,
+  packageCardList,
   error,
   clearError
 }: CardListProps) {
@@ -78,6 +80,7 @@ export default function CardList({
         <FreeTextInput
           onImportCards={onPasteCards}
           onCreatePackage={onCreatePackageFromCards}
+          cardList={packageCardList}
         />
       )}
 

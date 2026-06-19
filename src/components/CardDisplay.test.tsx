@@ -134,7 +134,7 @@ describe('CardDisplay', () => {
     });
 
     it('should handle not found cards', () => {
-      const notFoundEntry: PackageEntry = { ...mockPackageEntry, not_found: true };
+      const notFoundEntry: PackageEntry = { ...mockPackageEntry, oracle_id: null, selected_print: null };
       render(<CardDisplay {...defaultProps} cardPackage={{ ...mockCardPackage, package_entries: [notFoundEntry] }} />);
 
       expect(screen.getByText('Not Found')).toBeInTheDocument();
