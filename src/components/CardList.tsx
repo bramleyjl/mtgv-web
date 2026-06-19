@@ -80,7 +80,7 @@ export default function CardList({
         <FreeTextInput
           onImportCards={onPasteCards}
           onCreatePackage={onCreatePackageFromCards}
-          cardList={packageCardList}
+          cardList={packageCardList ?? null}
         />
       )}
 
