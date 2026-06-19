@@ -3,7 +3,6 @@
 import { useMemo, useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { CardPrint } from '@/types';
-import { imageCache, getImagePriority } from '@/lib/imageCache';
 
 interface CardVersionProps {
   print: CardPrint;
@@ -52,14 +51,6 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
     return () => clearTimeout(fallbackTimer);
   }, [imageUrl]);
 
-  // Cache the image when it's available (only if not already cached)
-  useEffect(() => {
-    if (imageUrl && !imageCache.has(imageUrl)) {
-      const priority = getImagePriority(true, isSelected, true); // Assume visible and in viewport
-      imageCache.set(imageUrl, priority);
-    }
-  }, [imageUrl, isSelected]);
-
   const handleImageLoad = useCallback(() => {
     setImageLoading(false);
   }, []);
@@ -75,14 +66,6 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
     // Force a re-render by updating the key or URL
     // This will trigger the useEffect to reset the loading state
   }, []);
-
-  // Preload image when component mounts (only if not already cached)
-  useEffect(() => {
-    if (imageUrl && !imageCache.has(imageUrl)) {
-      const priority = getImagePriority(true, isSelected, true);
-      imageCache.preload(imageUrl, priority);
-    }
-  }, [imageUrl, isSelected]);
 
   const handleClick = useCallback(() => {
     onSelect(print.scryfall_id);
@@ -154,6 +137,7 @@ export default function CardVersion({ print, isSelected, onSelect, cardName, gam
             src={imageUrl}
             alt={`${cardName} - ${print.set_name || 'Unknown Set'}`}
             fill
+            loading="lazy"
             className={`card-image transition-opacity ${
               imageLoading ? 'card-image-loading' : 'card-image-loaded'
             }`}
