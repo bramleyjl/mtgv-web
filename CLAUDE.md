@@ -69,10 +69,9 @@ src/
 - `NEXT_PUBLIC_WS_URL` — WebSocket URL for mtgv-api
 See `Secrets management & key security` Notion card for full list.
 
-## Hosting (Render)
-- Staging service live on Render starter tier
-- Cold start ~11s — always-on instances needed for production
-- Auto-deploys from GitHub on push to main
+## Hosting
+- **Staging**: self-hosted on pangolin (home server) via Docker Compose — see `mtgv-api/deploy/STAGING_PANGOLIN.md`. Access is LAN/Tailscale-only, no public exposure. No auto-deploy — `git pull` + `docker compose build && up -d` on the host.
+- **Render**: staging service suspended as of Aug 2026 to cut the $15/month bill during a low-activity period — not deleted, so it can be resumed if needed. Production not yet launched.
 
 ## Notion tracking
 MTGVersioner kanban: https://app.notion.com/p/bramleyjl/d7f0ee3c2cec4f079e48698232dfe02e?v=e577c2a446b848b9964d1880d158daef
