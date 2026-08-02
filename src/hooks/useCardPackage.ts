@@ -121,7 +121,7 @@ export function useCardPackage(): UseCardPackageReturn {
           }
 
           // Update package with newly added card from WebSocket event
-          const cardData = message.data as { cardEntry: any; cardList: Card[] };
+          const cardData = message.data as { cardEntry: PackageEntry; cardList: Card[] };
 
           setCardPackage((prev: CardPackage | null) => {
             // Use the ref value if prev is null (stale closure issue)
