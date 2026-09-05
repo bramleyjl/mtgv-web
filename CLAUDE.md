@@ -74,12 +74,5 @@ See `Secrets management & key security` Notion card for full list.
 - **Render**: staging service suspended as of Aug 2026 to cut the $15/month bill during a low-activity period — not deleted, so it can be resumed if needed. Production not yet launched.
 
 ## Notion tracking
-MTGVersioner kanban: https://app.notion.com/p/bramleyjl/d7f0ee3c2cec4f079e48698232dfe02e?v=e577c2a446b848b9964d1880d158daef
+MTGVersioner kanban is the source of truth for planned/deferred work — not this file: https://app.notion.com/p/bramleyjl/d7f0ee3c2cec4f079e48698232dfe02e?v=e577c2a446b848b9964d1880d158daef
 Collection ID (for MCP queries): `b3d9cce2-f7ec-4f8c-9596-7271988b3b14`
-
-## Known deferred work (Icebox)
-- Mobile nav bar collapse (hamburger menu)
-- Color themes (MTG 5-color palette drafted)
-- State management refactor (gated on React/Next.js deep dive)
-- Fblthp "Totally Lost" as card-not-found fallback image
-- DFC card parsing in deck list parser (front-face name only from Moxfield etc.)
